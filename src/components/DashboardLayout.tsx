@@ -148,6 +148,13 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
                             onClick={() => onViewChange('notes')}
                             active={currentView === 'notes'}
                         />
+                        <SidebarItem
+                            icon={<Clock size={18} />}
+                            label="Kendini Test Et"
+                            isOpen={isSidebarOpen}
+                            onClick={() => onViewChange('pomodoro')}
+                            active={currentView === 'pomodoro'}
+                        />
                     </div>
 
                     {/* Templates */}

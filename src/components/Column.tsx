@@ -1,5 +1,6 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
-import { Task, TaskCard, TaskId } from "./TaskCard";
+import { Task, TaskId } from "@/types";
+import { TaskCard } from "./TaskCard";
 import { useMemo, useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus, Inbox } from "lucide-react";
@@ -80,7 +81,7 @@ export function Column({ column, tasks, deleteTask, updateTask, createTask, addT
                 )}
             </div>
 
-            {column.id === "todo" && createTask && (
+            {createTask && (
                 <div className="mt-4">
                     <input
                         className="w-full p-3 rounded-xl border border-white/10 focus:outline-none focus:border-blue-500/50 bg-black/20 text-neutral-200 placeholder:text-neutral-600 shadow-inner transition-all text-sm"

@@ -49,12 +49,12 @@ body.theme-nebula {
 /* Zen Theme */
 body.theme-zen {
   --background: #ffffff;
-  --foreground: #333333;
+  --foreground: #000000;
   --card-bg: rgba(255, 255, 255, 0.8);
   --border-color: rgba(0, 0, 0, 0.1);
-  --neon-primary: #666666;
-  --neon-secondary: #888888;
-  --neon-accent: #444444;
+  --neon-primary: #000000;
+  --neon-secondary: #333333;
+  --neon-accent: #000000;
   background-image: none;
 }
 
@@ -69,6 +69,32 @@ body.theme-zen .glass-card {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
   background: white;
+}
+
+/* Force all text to black in Zen theme */
+body.theme-zen * {
+  color: #000000 !important;
+}
+
+body.theme-zen .text-neutral-200,
+body.theme-zen .text-neutral-300,
+body.theme-zen .text-neutral-400,
+body.theme-zen .text-neutral-500,
+body.theme-zen .text-neutral-600,
+body.theme-zen .text-white {
+  color: #000000 !important;
+}
+
+/* Keep some elements with appropriate colors */
+body.theme-zen .text-blue-400,
+body.theme-zen .text-blue-300,
+body.theme-zen .text-purple-400,
+body.theme-zen .text-green-400,
+body.theme-zen .text-red-400,
+body.theme-zen .text-red-500,
+body.theme-zen .text-yellow-500 {
+  color: inherit !important;
+  filter: brightness(0.7);
 }
 
 /* Party Theme */

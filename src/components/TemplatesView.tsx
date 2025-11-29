@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Scroll, Landmark, Shield, Rocket, Umbrella, Calendar, Plus, X, Save } from 'lucide-react';
+import { Scroll, Landmark, Shield, Rocket, Umbrella, Calendar, Plus, X, Save, Database } from 'lucide-react';
 import { Task } from '@/types';
 import { toast } from 'sonner';
 
@@ -95,9 +95,10 @@ const DEFAULT_TEMPLATES: Template[] = [
 
 interface TemplatesViewProps {
     onUseTemplate?: (tasks: Partial<Task>[]) => void;
+    onCreateWorkspace?: (name: string, tasks: Partial<Task>[]) => void;
 }
 
-export function TemplatesView({ onUseTemplate }: TemplatesViewProps) {
+export function TemplatesView({ onUseTemplate, onCreateWorkspace }: TemplatesViewProps) {
     const [activeCategory, setActiveCategory] = useState<'All' | 'DAO' | 'Engineering' | 'Growth' | 'Custom'>('All');
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isCreating, setIsCreating] = useState(false);
@@ -194,6 +195,15 @@ export function TemplatesView({ onUseTemplate }: TemplatesViewProps) {
         }
     };
 
+    const handleCreateWorkspace = (template: Template, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const workspaceName = prompt('Enter workspace name:', template.title);
+        if (workspaceName && workspaceName.trim() && onCreateWorkspace) {
+            onCreateWorkspace(workspaceName.trim(), template.tasks);
+            toast.success(`Workspace "${workspaceName}" created!`);
+        }
+    };
+
     return (
         <div className="w-full p-8 animate-in fade-in duration-500 relative">
             {/* Header */}
@@ -260,13 +270,22 @@ export function TemplatesView({ onUseTemplate }: TemplatesViewProps) {
                             {template.description}
                         </p>
 
-                        <button
-                            onClick={() => handleUseTemplate(template)}
-                            className="w-full py-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-neutral-300 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 font-medium text-sm"
-                        >
-                            <Plus size={16} />
-                            Use Template
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={(e) => handleCreateWorkspace(template, e)}
+                                className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-purple-500/20 text-neutral-300 hover:text-purple-300 border border-white/10 hover:border-purple-500/30 transition-all flex items-center justify-center gap-2 font-medium text-sm"
+                            >
+                                <Database size={16} />
+                                Create Workspace
+                            </button>
+                            <button
+                                onClick={() => handleUseTemplate(template)}
+                                className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-neutral-300 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 font-medium text-sm"
+                            >
+                                <Plus size={16} />
+                                Use
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>

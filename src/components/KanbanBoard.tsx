@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Column } from "./Column";
 import { Task, TaskId } from "@/types";
-import { Search, Download, Upload, Maximize2, Minimize2 } from "lucide-react";
+import { Search, Download, Upload, Maximize2, Minimize2, Plus } from "lucide-react";
 import { PomodoroTimer } from "./PomodoroTimer";
 import { ConfettiManager } from "./ConfettiManager";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -29,11 +29,15 @@ import { TaskCard } from "./TaskCard";
 import { useAccount, useWriteContract } from "wagmi";
 import { toast } from "sonner";
 
+const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000"; // BURAYA GERÇEK KONTRAT ADRESİNİ YAZ
 const TASK_JOURNAL_ABI = [
     {
         inputs: [{ internalType: "string[]", name: "taskTitles", type: "string[]" }],
         name: "logTasks",
-    },
+    }
+];
+
+const defaultCols = [
     {
         id: "bounty",
         title: "Bounty Board",
@@ -59,7 +63,7 @@ const TASK_JOURNAL_ABI = [
 const defaultTasks: Task[] = [
     {
         id: "1",
-        columnId: "backlog",
+        columnId: "todo",
         content: "Research DAO Governance Models",
         tags: ["Research"],
     },
@@ -97,7 +101,7 @@ interface KanbanBoardProps {
     deleteTask: (id: TaskId) => void;
     createTask: (task: Task) => void;
     addTag: (id: TaskId, tag: string) => void;
-    moveTask: (activeIndex: number, overIndex: number) => void;
+    moveTask: (activeId: string, overId: string) => void;
     setTasks: (tasks: Task[]) => void;
 }
 
@@ -192,7 +196,7 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
     function handleCreateTask(content: string) {
         const newTask: Task = {
             id: generateId(),
-            columnId: "backlog",
+            columnId: "todo",
             content,
             dueDate: new Date().toISOString(),
         };
@@ -298,7 +302,7 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                 return;
             }
 
-            moveTask(activeIndex, overIndex);
+            moveTask(String(activeId), String(overId));
         }
     }
 
@@ -314,9 +318,13 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
             .map((t) => t.content);
 
         if (doneTasks.length === 0) {
-            toast.error("No done tasks to sync!");
+            toast.error("No done tasks to archive!");
             return;
         }
+
+        // Confirmation dialog
+        const confirmed = window.confirm("Only tasks in the 'Done' column will be permanently archived to the blockchain. Continue?");
+        if (!confirmed) return;
 
         try {
             const promise = writeContractAsync({
@@ -327,17 +335,17 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
             });
 
             toast.promise(promise, {
-                loading: 'Syncing to blockchain...',
+                loading: 'Archiving to blockchain...',
                 success: (data) => {
                     // Save to local history
                     addHistoryItem(doneTasks);
                     playWhoosh();
-                    return `Sync Successful! Tx: ${data}`;
+                    return `Archive Successful! Tx: ${data}`;
                 },
-                error: 'Sync Failed',
+                error: 'Archive Failed',
             });
         } catch (error) {
-            console.error("Sync failed:", error);
+            console.error("Archive failed:", error);
         }
     }
 
@@ -350,7 +358,7 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
             {!focusMode && (
                 <div className="w-full px-8 py-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-white tracking-tight">Project Tracker</h1>
+                        <h1 className="text-3xl font-bold text-white tracking-tight">Task Board</h1>
                         <div className="h-6 w-[1px] bg-white/10"></div>
                         <PomodoroTimer />
                     </div>
@@ -370,12 +378,33 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                             />
                         </div>
 
+                        {/* New Task Button */}
+                        <button
+                            onClick={() => {
+                                const content = window.prompt("Enter task content:");
+                                if (content && content.trim()) {
+                                    createTask({
+                                        id: Math.random().toString(),
+                                        columnId: 'todo',
+                                        content: content.trim(),
+                                        tags: [],
+                                        dueDate: new Date().toISOString(),
+                                    });
+                                    toast.success("Task added to To Do!");
+                                }
+                            }}
+                            className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 px-4 py-2 rounded-lg font-medium transition-all border border-blue-500/20 hover:border-blue-500/40"
+                        >
+                            <Plus size={16} />
+                            <span>New Task</span>
+                        </button>
+
                         {isConnected && (
                             <button
                                 onClick={handleSync}
                                 className="flex items-center gap-2 bg-neon-accent/10 hover:bg-neon-accent/20 text-neon-primary hover:text-white px-4 py-2 rounded-lg font-medium transition-all border border-neon-accent/20 hover:border-neon-accent/40"
                             >
-                                <span>Sync Journal</span>
+                                <span>Archive Completed</span>
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                             </button>
                         )}
@@ -405,7 +434,7 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                     <div className="mb-8 max-w-7xl mx-auto transition-all duration-500">
                         <div className="flex justify-between items-end mb-2">
                             <div>
-                                <h2 className="text-3xl font-bold text-white mb-1">Project Tracker</h2>
+                                <h2 className="text-3xl font-bold text-white mb-1">Task Board</h2>
                                 <p className="text-neutral-500 text-sm">Manage your tasks on the Arc Network</p>
                             </div>
                             <div className="text-right">
@@ -437,7 +466,7 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                                 tasks={filteredTasks.filter((task) => task.columnId === col.id)}
                                 deleteTask={deleteTask}
                                 updateTask={updateTask}
-                                createTask={col.id === "backlog" ? handleCreateTask : undefined}
+                                createTask={col.id === "todo" ? handleCreateTask : undefined}
                                 addTag={addTag}
                             />
                         ))}
@@ -464,6 +493,12 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                     <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center">?</span>
                     How to use
                 </a>
+            </div>
+
+            {/* Auto-save Indicator */}
+            <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 text-xs text-neutral-600">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span>Cloud Synced & Auto-saved</span>
             </div>
         </div>
     );

@@ -1,102 +1,43 @@
 import { useState, useEffect } from 'react';
 import { Task } from '@/types';
+import { arrayMove } from "@dnd-kit/sortable";
 
 const MOCK_TASKS: Task[] = [
-    {
-        id: '1',
-        columnId: 'backlog',
-        content: 'Research DAO Governance Models',
-        tags: ['Research'],
-        dueDate: '2025-12-05',
-    },
-    {
-        id: '2',
-        columnId: 'bounty',
-        content: 'Implement Smart Contract Escrow',
-        bounty: '1.5 ETH',
-        tags: ['Dev', 'High Priority'],
-        dueDate: '2025-12-10',
-    },
-    {
-        id: '3',
-        columnId: 'todo',
-        content: 'Design Profile Page UI',
-        assignee: 'Alex',
-        tags: ['Design'],
-        dueDate: '2025-12-02',
-    },
-    {
-        id: '4',
-        columnId: 'review',
-        content: 'Audit Token Vesting Contract',
-        bounty: '2.0 ETH',
-        assignee: '0xSafe',
-        dueDate: '2025-12-15',
-    },
-    {
-        id: '5',
-        columnId: 'done',
-        content: 'Initial Project Setup',
-        dueDate: '2025-11-20',
-    },
-    {
-        id: '6',
-        columnId: 'inprogress',
-        content: 'Integrate IPFS Storage',
-        tags: ['Dev'],
-        assignee: 'Me',
-        dueDate: '2025-12-08',
-    },
-    {
-        id: '7',
-        columnId: 'bounty',
-        content: 'Create Marketing Assets',
-        bounty: '0.2 ETH',
-        dueDate: '2025-12-12',
-    }
+    { id: '1', columnId: 'todo', content: 'Research DAO Governance Models', tags: ['Research'], dueDate: '2025-12-05' },
+    { id: '2', columnId: 'bounty', content: 'Implement Smart Contract Escrow', bounty: '1.5 ETH', tags: ['Dev', 'High Priority'], dueDate: '2025-12-10' },
+    { id: '3', columnId: 'todo', content: 'Design Profile Page UI', assignee: 'Alex', tags: ['Design'], dueDate: '2025-12-02' },
+    { id: '4', columnId: 'review', content: 'Audit Token Vesting Contract', bounty: '2.0 ETH', assignee: '0xSafe', dueDate: '2025-12-15' },
+    { id: '5', columnId: 'done', content: 'Initial Project Setup', dueDate: '2025-11-20' },
+    { id: '6', columnId: 'inprogress', content: 'Integrate IPFS Storage', tags: ['Dev'], assignee: 'Me', dueDate: '2025-12-08' },
+    { id: '7', columnId: 'bounty', content: 'Create Marketing Assets', bounty: '0.2 ETH', dueDate: '2025-12-12' }
 ];
 
 export function useTaskManager() {
-    // Initialize with empty array to prevent hydration mismatch
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [isMounted, setIsMounted] = useState(false);
 
-    // Load tasks from localStorage after component mounts (client-side only)
     useEffect(() => {
-        // Try to load from new key first
+        setIsMounted(true);
         let saved = localStorage.getItem('arcOS-tasks');
-
         if (!saved) {
-            // Migration: Check for old keys
             const oldSaved = localStorage.getItem('kanban-tasks') || localStorage.getItem('arc-tasks');
             if (oldSaved) {
                 saved = oldSaved;
-                // Migrate to new key
                 localStorage.setItem('arcOS-tasks', oldSaved);
-                localStorage.removeItem('kanban-tasks');
-                localStorage.removeItem('arc-tasks');
             }
         }
-
         if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setTasks(parsed);
-            } catch (error) {
-                console.error('Failed to parse tasks:', error);
-                setTasks(MOCK_TASKS);
-            }
+            try { setTasks(JSON.parse(saved)); } catch (error) { setTasks(MOCK_TASKS); }
         } else {
-            // First time: use mock data
             setTasks(MOCK_TASKS);
         }
     }, []);
 
-    // Save tasks to localStorage whenever they change
     useEffect(() => {
-        if (tasks.length > 0) {
+        if (isMounted && tasks.length > 0) {
             localStorage.setItem('arcOS-tasks', JSON.stringify(tasks));
         }
-    }, [tasks]);
+    }, [tasks, isMounted]);
 
     const updateTask = (id: string, updates: Partial<Task>) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
@@ -123,23 +64,14 @@ export function useTaskManager() {
         }));
     };
 
-    const moveTask = (activeIndex: number, overIndex: number) => {
+    // FIX: Index yerine ID kullanarak taşıma işlemi
+    const moveTask = (activeId: string, overId: string) => {
         setTasks((items) => {
-            const result = [...items];
-            const [removed] = result.splice(activeIndex, 1);
-            result.splice(overIndex, 0, removed);
-            return result;
+            const oldIndex = items.findIndex((item) => item.id === activeId);
+            const newIndex = items.findIndex((item) => item.id === overId);
+            return arrayMove(items, oldIndex, newIndex);
         });
     };
 
-    return {
-        tasks,
-        setTasks,
-        updateTask,
-        deleteTask,
-        createTask,
-        addTasks,
-        addTag,
-        moveTask,
-    };
+    return { tasks, setTasks, updateTask, deleteTask, createTask, addTasks, addTag, moveTask };
 }

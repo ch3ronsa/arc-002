@@ -25,7 +25,7 @@ export function ListView({ tasks }: ListViewProps) {
             case 'bounty': return 'Bounty';
             case 'review': return 'Review';
             case 'todo': return 'To Do';
-            case 'backlog': return 'Backlog';
+            case 'bounty': return 'Bounty Board';
             default: return status;
         }
     };

@@ -165,7 +165,7 @@ export function TaskCard({ task, deleteTask, updateTask, addTag }: TaskCardProps
                             }}
                             className="px-2 py-1 rounded-md bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 text-[10px] font-medium transition-colors"
                         >
-                            Claim
+                            Assign to Me
                         </button>
                     )}
 
@@ -244,7 +244,7 @@ export function TaskCard({ task, deleteTask, updateTask, addTag }: TaskCardProps
             </motion.div>
             <button
                 onClick={() => deleteTask(task.id)}
-                className="absolute top-2 right-2 p-1 text-neutral-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 p-1 text-neutral-600 hover:text-red-500 transition-colors"
             >
                 <Trash2 size={16} />
             </button>
