@@ -4,7 +4,6 @@ import { useMemo, useState, useEffect } from "react";
 import { Column } from "./Column";
 import { Task, TaskId } from "@/types";
 import { Search, Download, Upload, Maximize2, Minimize2, Plus } from "lucide-react";
-import { PomodoroTimer } from "./PomodoroTimer";
 import { ConfettiManager } from "./ConfettiManager";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { FocusExitButton } from "./FocusExitButton";
@@ -359,8 +358,6 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                 <div className="w-full px-8 py-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center gap-4">
                         <h1 className="text-3xl font-bold text-white tracking-tight">Task Board</h1>
-                        <div className="h-6 w-[1px] bg-white/10"></div>
-                        <PomodoroTimer />
                     </div>
 
                     <div className="flex items-center gap-4">
