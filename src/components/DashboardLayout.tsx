@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
     Layout, Lock, FileText, Settings, ChevronRight, ChevronDown, Plus,
     Grid, List, Calendar, Clock, CreditCard, Activity, Search, Bell,
@@ -15,55 +15,14 @@ interface DashboardLayoutProps {
     children: React.ReactNode;
     currentView: string;
     onViewChange: (view: string) => void;
-    activeWorkspaceName?: string;
+    activeWorkspaceId: string;
+    onWorkspaceChange: (id: string, name: string) => void;
 }
 
-export function DashboardLayout({ children, currentView, onViewChange, activeWorkspaceName }: DashboardLayoutProps) {
+export function DashboardLayout({ children, currentView, onViewChange, activeWorkspaceId, onWorkspaceChange }: DashboardLayoutProps) {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const { profile } = useProfile();
     const { isConnected } = useAccount();
-
-    const [workspaces, setWorkspaces] = useState<{ id: string, name: string }[]>([]);
-    const [activeWorkspace, setActiveWorkspace] = useState('1');
-    const [isAddingWorkspace, setIsAddingWorkspace] = useState(false);
-
-    // Load workspaces from localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem('arc-workspaces');
-        if (saved) {
-            try {
-                setWorkspaces(JSON.parse(saved));
-            } catch (e) {
-                console.error('Failed to parse workspaces', e);
-                setWorkspaces([{ id: '1', name: 'My Workspace' }]);
-            }
-        } else {
-            setWorkspaces([{ id: '1', name: 'My Workspace' }]);
-        }
-    }, []);
-
-    // Save workspaces to localStorage
-    useEffect(() => {
-        if (workspaces.length > 0) {
-            localStorage.setItem('arc-workspaces', JSON.stringify(workspaces));
-        }
-    }, [workspaces]);
-
-    const handleAddWorkspace = () => {
-        setSidebarOpen(true);
-        setIsAddingWorkspace(true);
-    };
-
-    const confirmAddWorkspace = (name: string) => {
-        const newWorkspace = {
-            id: Math.random().toString(36).substr(2, 9),
-            name
-        };
-        setWorkspaces([...workspaces, newWorkspace]);
-        setIsAddingWorkspace(false);
-        setActiveWorkspace(newWorkspace.id);
-        onViewChange('workspace');
-    };
 
     return (
         <div className="flex h-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-500">
@@ -89,53 +48,16 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
 
                 {/* Sidebar Content */}
                 <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
-                    {/* Workspaces */}
+                    {/* Workspace - Single Only */}
                     <div className="space-y-1">
-                        <div className="flex items-center justify-between px-3 mb-2">
-                            {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Workspaces</h3>}
-                            <button
-                                onClick={handleAddWorkspace}
-                                className="text-neutral-500 hover:text-white transition-colors"
-                                title="Add Workspace"
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </div>
-
-                        {workspaces.map(ws => (
-                            <SidebarItem
-                                key={ws.id}
-                                icon={<Database size={18} />}
-                                label={ws.name}
-                                isOpen={isSidebarOpen}
-                                active={activeWorkspace === ws.id}
-                                onClick={() => {
-                                    setActiveWorkspace(ws.id);
-                                    onViewChange('workspace');
-                                }}
-                            />
-                        ))}
-
-                        {isAddingWorkspace && isSidebarOpen && (
-                            <div className="px-3 py-1">
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-purple-500/50"
-                                    placeholder="Workspace Name..."
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            const name = e.currentTarget.value.trim();
-                                            if (name) confirmAddWorkspace(name);
-                                            else setIsAddingWorkspace(false);
-                                        } else if (e.key === 'Escape') {
-                                            setIsAddingWorkspace(false);
-                                        }
-                                    }}
-                                    onBlur={() => setIsAddingWorkspace(false)}
-                                />
-                            </div>
-                        )}
+                        {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Workspace</h3>}
+                        <SidebarItem
+                            icon={<Database size={18} />}
+                            label="My Workspace"
+                            isOpen={isSidebarOpen}
+                            active={currentView === 'workspace' || currentView === 'board' || currentView === 'list' || currentView === 'calendar'}
+                            onClick={() => onViewChange('workspace')}
+                        />
                     </div>
 
                     {/* Private Pages */}
@@ -155,19 +77,6 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
                             onClick={() => onViewChange('pomodoro')}
                             active={currentView === 'pomodoro'}
                         />
-                    </div>
-
-                    {/* Templates */}
-                    <div className="space-y-1">
-                        {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Library</h3>}
-                        <SidebarItem
-                            icon={<FileText size={18} />}
-                            label="Templates"
-                            isOpen={isSidebarOpen}
-                            active={currentView === 'templates'}
-                            onClick={() => onViewChange('templates')}
-                        />
-                        <SidebarItem icon={<Settings size={18} />} label="Settings" isOpen={isSidebarOpen} />
                     </div>
                 </div>
 

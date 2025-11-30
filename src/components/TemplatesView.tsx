@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Scroll, Landmark, Shield, Rocket, Umbrella, Calendar, Plus, X, Save, Database } from 'lucide-react';
+import { Scroll, Landmark, Shield, Rocket, Calendar, Plus, X, Save, Database } from 'lucide-react';
 import { Task } from '@/types';
 import { toast } from 'sonner';
 
@@ -69,19 +69,6 @@ const DEFAULT_TEMPLATES: Template[] = [
     {
         id: '5',
         category: 'Growth',
-        title: 'Airdrop Whitelist',
-        icon: <Umbrella size={24} className="text-pink-400" />,
-        description: 'Table to manage wallet addresses and allocation amounts.',
-        tasks: [
-            { content: 'Define Eligibility Criteria', columnId: 'done', tags: ['Growth'] },
-            { content: 'Snapshot Block Height', columnId: 'todo', tags: ['Dev'] },
-            { content: 'Filter Sybil Attackers', columnId: 'backlog', tags: ['Security'] },
-            { content: 'Publish Merkle Root', columnId: 'backlog', tags: ['Dev'] },
-        ]
-    },
-    {
-        id: '6',
-        category: 'Growth',
         title: 'Content Calendar',
         icon: <Calendar size={24} className="text-yellow-400" />,
         description: 'Schedule tweets, AMAs, and community calls.',
@@ -89,6 +76,7 @@ const DEFAULT_TEMPLATES: Template[] = [
             { content: 'Draft Weekly Thread', columnId: 'todo', tags: ['Content'] },
             { content: 'Schedule Discord AMA', columnId: 'todo', tags: ['Community'] },
             { content: 'Prepare Monthly Update', columnId: 'backlog', tags: ['Content'] },
+            { content: 'Plan Twitter Spaces', columnId: 'backlog', tags: ['Community'] },
         ]
     },
 ];

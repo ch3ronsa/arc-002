@@ -1,77 +1,186 @@
 import { useState, useEffect } from 'react';
 import { Task } from '@/types';
 import { arrayMove } from "@dnd-kit/sortable";
+import { supabase } from '@/lib/supabase';
+import { useAccount } from 'wagmi';
+import { toast } from 'sonner';
 
-const MOCK_TASKS: Task[] = [
-    { id: '1', columnId: 'todo', content: 'Research DAO Governance Models', tags: ['Research'], dueDate: '2025-12-05' },
-    { id: '2', columnId: 'bounty', content: 'Implement Smart Contract Escrow', bounty: '1.5 ETH', tags: ['Dev', 'High Priority'], dueDate: '2025-12-10' },
-    { id: '3', columnId: 'todo', content: 'Design Profile Page UI', assignee: 'Alex', tags: ['Design'], dueDate: '2025-12-02' },
-    { id: '4', columnId: 'review', content: 'Audit Token Vesting Contract', bounty: '2.0 ETH', assignee: '0xSafe', dueDate: '2025-12-15' },
-    { id: '5', columnId: 'done', content: 'Initial Project Setup', dueDate: '2025-11-20' },
-    { id: '6', columnId: 'inprogress', content: 'Integrate IPFS Storage', tags: ['Dev'], assignee: 'Me', dueDate: '2025-12-08' },
-    { id: '7', columnId: 'bounty', content: 'Create Marketing Assets', bounty: '0.2 ETH', dueDate: '2025-12-12' }
-];
-
-export function useTaskManager() {
+export function useTaskManager(workspaceId: string = '1') {
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [isMounted, setIsMounted] = useState(false);
+    const { address } = useAccount();
+    const [isLoading, setIsLoading] = useState(false);
 
+    // Fetch tasks from Supabase
     useEffect(() => {
-        setIsMounted(true);
-        let saved = localStorage.getItem('arcOS-tasks');
-        if (!saved) {
-            const oldSaved = localStorage.getItem('kanban-tasks') || localStorage.getItem('arc-tasks');
-            if (oldSaved) {
-                saved = oldSaved;
-                localStorage.setItem('arcOS-tasks', oldSaved);
+        if (!address) {
+            setTasks([]);
+            return;
+        }
+
+        const fetchTasks = async () => {
+            setIsLoading(true);
+            const { data, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('wallet_address', address)
+                .eq('workspace_id', workspaceId);
+
+            if (error) {
+                console.error('Error fetching tasks:', error);
+                toast.error('Failed to load tasks');
+            } else {
+                // Map database fields to Task type if needed (snake_case to camelCase)
+                const mappedTasks = data?.map(t => ({
+                    id: t.id,
+                    columnId: t.column_id,
+                    content: t.content,
+                    tags: t.tags || [],
+                    dueDate: t.due_date,
+                    assignee: t.assignee,
+                    bounty: t.bounty
+                })) || [];
+                setTasks(mappedTasks);
             }
+            setIsLoading(false);
+        };
+
+        fetchTasks();
+
+        // Subscribe to realtime changes
+        const channel = supabase
+            .channel('tasks_changes')
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'tasks', filter: `wallet_address=eq.${address}` },
+                (payload) => {
+                    fetchTasks(); // Refresh on any change
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [address, workspaceId]);
+
+    const createTask = async (task: Task) => {
+        if (!address) {
+            toast.error('Please connect your wallet');
+            return;
         }
-        if (saved) {
-            try { setTasks(JSON.parse(saved)); } catch (error) { setTasks(MOCK_TASKS); }
-        } else {
-            setTasks(MOCK_TASKS);
-        }
-    }, []);
 
-    useEffect(() => {
-        if (isMounted && tasks.length > 0) {
-            localStorage.setItem('arcOS-tasks', JSON.stringify(tasks));
-        }
-    }, [tasks, isMounted]);
-
-    const updateTask = (id: string, updates: Partial<Task>) => {
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    };
-
-    const deleteTask = (id: string) => {
-        setTasks(prev => prev.filter(t => t.id !== id));
-    };
-
-    const createTask = (task: Task) => {
+        // Optimistic update
         setTasks(prev => [...prev, task]);
+
+        const { error } = await supabase
+            .from('tasks')
+            .insert({
+                id: task.id, // Use client-generated ID or let DB generate
+                wallet_address: address,
+                workspace_id: workspaceId,
+                content: task.content,
+                column_id: task.columnId,
+                tags: task.tags,
+                due_date: task.dueDate,
+                assignee: task.assignee,
+                bounty: task.bounty
+            });
+
+        if (error) {
+            console.error('Error creating task:', error);
+            toast.error('Failed to create task');
+            // Revert optimistic update
+            setTasks(prev => prev.filter(t => t.id !== task.id));
+        }
     };
 
-    const addTasks = (newTasks: Task[]) => {
+    const updateTask = async (id: string, updates: Partial<Task>) => {
+        if (!address) return;
+
+        // Optimistic update
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+
+        const dbUpdates: any = {};
+        if (updates.content) dbUpdates.content = updates.content;
+        if (updates.columnId) dbUpdates.column_id = updates.columnId;
+        if (updates.tags) dbUpdates.tags = updates.tags;
+        if (updates.dueDate) dbUpdates.due_date = updates.dueDate;
+        if (updates.assignee) dbUpdates.assignee = updates.assignee;
+        if (updates.bounty) dbUpdates.bounty = updates.bounty;
+
+        const { error } = await supabase
+            .from('tasks')
+            .update(dbUpdates)
+            .eq('id', id)
+            .eq('wallet_address', address);
+
+        if (error) {
+            console.error('Error updating task:', error);
+            toast.error('Failed to update task');
+        }
+    };
+
+    const deleteTask = async (id: string) => {
+        if (!address) return;
+
+        // Optimistic update
+        setTasks(prev => prev.filter(t => t.id !== id));
+
+        const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', id)
+            .eq('wallet_address', address);
+
+        if (error) {
+            console.error('Error deleting task:', error);
+            toast.error('Failed to delete task');
+        }
+    };
+
+    const addTasks = async (newTasks: Task[]) => {
+        if (!address) return;
+
+        // Optimistic update
         setTasks(prev => [...prev, ...newTasks]);
+
+        const dbTasks = newTasks.map(t => ({
+            id: t.id,
+            wallet_address: address,
+            workspace_id: workspaceId,
+            content: t.content,
+            column_id: t.columnId,
+            tags: t.tags,
+            due_date: t.dueDate,
+            assignee: t.assignee,
+            bounty: t.bounty
+        }));
+
+        const { error } = await supabase
+            .from('tasks')
+            .insert(dbTasks);
+
+        if (error) {
+            console.error('Error adding tasks:', error);
+            toast.error('Failed to add tasks');
+        }
     };
 
     const addTag = (id: string, tag: string) => {
-        setTasks(prev => prev.map(t => {
-            if (t.id !== id) return t;
-            const tags = t.tags || [];
-            if (tags.includes(tag)) return t;
-            return { ...t, tags: [...tags, tag] };
-        }));
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            const newTags = [...(task.tags || []), tag];
+            updateTask(id, { tags: newTags });
+        }
     };
 
-    // FIX: Index yerine ID kullanarak taşıma işlemi
     const moveTask = (activeId: string, overId: string) => {
         setTasks((items) => {
             const oldIndex = items.findIndex((item) => item.id === activeId);
             const newIndex = items.findIndex((item) => item.id === overId);
             return arrayMove(items, oldIndex, newIndex);
         });
+        // Note: Persisting order requires an 'order' field in DB, skipping for MVP
     };
 
-    return { tasks, setTasks, updateTask, deleteTask, createTask, addTasks, addTag, moveTask };
+    return { tasks, setTasks, updateTask, deleteTask, createTask, addTasks, addTag, moveTask, isLoading };
 }

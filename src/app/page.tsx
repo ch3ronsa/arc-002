@@ -1,65 +1,54 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ListView } from "@/components/ListView";
 import { CalendarView } from "@/components/CalendarView";
-import { TemplatesView } from "@/components/TemplatesView";
 import { EncryptedNotesView } from "@/components/EncryptedNotesView";
 import { WorkspaceView } from "@/components/WorkspaceView";
 import { PomodoroView } from "@/components/PomodoroView";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "sonner";
 import { useTaskManager } from "@/hooks/useTaskManager";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState('workspace');
-  const [activeWorkspace] = useState({ id: '1', name: 'My Workspace' });
-  const { tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks, addTasks } = useTaskManager();
+  const [activeWorkspace, setActiveWorkspace] = useState({ id: '1', name: 'My Workspace' });
+  const { tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks, addTasks } = useTaskManager(activeWorkspace.id);
+  const [mounted, setMounted] = useState(false);
 
-  const handleUseTemplate = (templateTasks: Partial<any>[]) => {
-    const newTasks = templateTasks.map(t => ({
-      content: t.content || 'New Task',
-      tags: t.tags || [],
-      ...t,
-      id: Math.floor(Math.random() * 1000000).toString(),
-      dueDate: new Date().toISOString(),
-      columnId: t.columnId || 'todo',
-    }));
-    // @ts-ignore - ID generation is handled above
-    addTasks(newTasks);
-    setCurrentView('board');
-    toast.success("Template applied successfully!");
-  };
+  // Load active workspace from localStorage
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem('arc-active-workspace');
+    if (saved) {
+      try {
+        setActiveWorkspace(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to load active workspace', e);
+      }
+    }
+  }, []);
 
-  const handleCreateWorkspace = (workspaceName: string, templateTasks: Partial<any>[]) => {
-    // Create workspace in localStorage
-    const workspaces = JSON.parse(localStorage.getItem('arc-workspaces') || '[{"id":"1","name":"My Workspace"}]');
-    const newWorkspace = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: workspaceName
-    };
-    workspaces.push(newWorkspace);
-    localStorage.setItem('arc-workspaces', JSON.stringify(workspaces));
+  // Save active workspace to localStorage
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('arc-active-workspace', JSON.stringify(activeWorkspace));
+    }
+  }, [activeWorkspace, mounted]);
 
-    // Save tasks for this workspace
-    const newTasks = templateTasks.map(t => ({
-      content: t.content || 'New Task',
-      tags: t.tags || [],
-      ...t,
-      id: Math.floor(Math.random() * 1000000).toString(),
-      dueDate: new Date().toISOString(),
-      columnId: t.columnId || 'todo',
-    }));
-    localStorage.setItem(`workspace-${newWorkspace.id}-tasks`, JSON.stringify(newTasks));
-
-    // Reload page to show new workspace
-    window.location.reload();
-  };
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#050508]" />;
+  }
 
   return (
     <main className="min-h-screen bg-[#050508] text-neutral-200">
-      <DashboardLayout currentView={currentView} onViewChange={setCurrentView} activeWorkspaceName={activeWorkspace.name}>
+      <DashboardLayout
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        activeWorkspaceId={activeWorkspace.id}
+        onWorkspaceChange={(id, name) => setActiveWorkspace({ id, name })}
+      >
         {currentView === 'board' && (
           <KanbanBoard
             tasks={tasks}
@@ -73,8 +62,7 @@ export default function Home() {
         )}
         {currentView === 'list' && <ListView tasks={tasks} />}
         {currentView === 'calendar' && <CalendarView tasks={tasks} />}
-        {currentView === 'templates' && <TemplatesView onUseTemplate={handleUseTemplate} onCreateWorkspace={handleCreateWorkspace} />}
-        {currentView === 'notes' && <EncryptedNotesView />}
+        {currentView === 'notes' && <EncryptedNotesView workspaceId={activeWorkspace.id} />}
         {currentView === 'workspace' && <WorkspaceView workspaceName={activeWorkspace.name} onViewChange={setCurrentView} />}
         {currentView === 'pomodoro' && <PomodoroView />}
         {currentView === 'timeline' && (

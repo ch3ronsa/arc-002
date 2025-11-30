@@ -1,12 +1,12 @@
 const hre = require("hardhat");
 
 async function main() {
-    const TaskJournal = await hre.ethers.getContractFactory("TaskJournal");
-    const taskJournal = await TaskJournal.deploy();
+    const ArcJournal = await hre.ethers.getContractFactory("ArcJournal");
+    const arcJournal = await ArcJournal.deploy();
 
-    await taskJournal.waitForDeployment();
+    await arcJournal.waitForDeployment();
 
-    console.log("TaskJournal deployed to:", await taskJournal.getAddress());
+    console.log("ArcJournal deployed to:", await arcJournal.getAddress());
 }
 
 main().catch((error) => {
