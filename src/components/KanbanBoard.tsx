@@ -9,7 +9,7 @@ import { ThemeSwitcher } from "./ThemeSwitcher";
 import { FocusExitButton } from "./FocusExitButton";
 import { useProfile } from "@/hooks/useProfile";
 import Link from "next/link";
-import useSound from "use-sound";
+// import useSound from "use-sound";
 import {
     DndContext,
     DragEndEvent,
@@ -117,9 +117,10 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
     const { isConnected, address } = useAccount();
     const { writeContractAsync } = useWriteContract();
 
-    const [playClick] = useSound('/sounds/click.mp3', { volume: 0.5 });
-    const [playPop] = useSound('/sounds/pop.mp3', { volume: 0.5 });
-    const [playWhoosh] = useSound('/sounds/whoosh.mp3', { volume: 0.5 });
+    // Sound effects disabled due to missing assets
+    const playClick = () => { };
+    const playPop = () => { };
+    const playWhoosh = () => { };
 
     // Load from local storage on mount - HANDLED IN HOOK NOW
     useEffect(() => {

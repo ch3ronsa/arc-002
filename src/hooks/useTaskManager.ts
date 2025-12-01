@@ -27,9 +27,8 @@ export function useTaskManager(workspaceId: string = '1') {
 
             if (error) {
                 console.error('Error fetching tasks:', error);
-                toast.error('Failed to load tasks');
+                // Don't show toast on initial load if empty, just log
             } else {
-                // Map database fields to Task type if needed (snake_case to camelCase)
                 const mappedTasks = data?.map(t => ({
                     id: t.id,
                     columnId: t.column_id,
@@ -46,13 +45,12 @@ export function useTaskManager(workspaceId: string = '1') {
 
         fetchTasks();
 
-        // Subscribe to realtime changes
         const channel = supabase
             .channel('tasks_changes')
             .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'tasks', filter: `wallet_address=eq.${address}` },
                 (payload) => {
-                    fetchTasks(); // Refresh on any change
+                    fetchTasks();
                 }
             )
             .subscribe();
@@ -68,35 +66,36 @@ export function useTaskManager(workspaceId: string = '1') {
             return;
         }
 
+        // Ensure ID is a UUID
+        const newTask = { ...task, id: crypto.randomUUID() };
+
         // Optimistic update
-        setTasks(prev => [...prev, task]);
+        setTasks(prev => [...prev, newTask]);
 
         const { error } = await supabase
             .from('tasks')
             .insert({
-                id: task.id, // Use client-generated ID or let DB generate
+                id: newTask.id,
                 wallet_address: address,
                 workspace_id: workspaceId,
-                content: task.content,
-                column_id: task.columnId,
-                tags: task.tags,
-                due_date: task.dueDate,
-                assignee: task.assignee,
-                bounty: task.bounty
+                content: newTask.content,
+                column_id: newTask.columnId,
+                tags: newTask.tags,
+                due_date: newTask.dueDate,
+                assignee: newTask.assignee,
+                bounty: newTask.bounty
             });
 
         if (error) {
             console.error('Error creating task:', error);
             toast.error('Failed to create task');
-            // Revert optimistic update
-            setTasks(prev => prev.filter(t => t.id !== task.id));
+            setTasks(prev => prev.filter(t => t.id !== newTask.id));
         }
     };
 
     const updateTask = async (id: string, updates: Partial<Task>) => {
         if (!address) return;
 
-        // Optimistic update
         setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
 
         const dbUpdates: any = {};
@@ -115,14 +114,12 @@ export function useTaskManager(workspaceId: string = '1') {
 
         if (error) {
             console.error('Error updating task:', error);
-            toast.error('Failed to update task');
         }
     };
 
     const deleteTask = async (id: string) => {
         if (!address) return;
 
-        // Optimistic update
         setTasks(prev => prev.filter(t => t.id !== id));
 
         const { error } = await supabase
@@ -140,10 +137,12 @@ export function useTaskManager(workspaceId: string = '1') {
     const addTasks = async (newTasks: Task[]) => {
         if (!address) return;
 
-        // Optimistic update
-        setTasks(prev => [...prev, ...newTasks]);
+        // Ensure all have UUIDs
+        const tasksWithUUIDs = newTasks.map(t => ({ ...t, id: crypto.randomUUID() }));
 
-        const dbTasks = newTasks.map(t => ({
+        setTasks(prev => [...prev, ...tasksWithUUIDs]);
+
+        const dbTasks = tasksWithUUIDs.map(t => ({
             id: t.id,
             wallet_address: address,
             workspace_id: workspaceId,
@@ -179,7 +178,6 @@ export function useTaskManager(workspaceId: string = '1') {
             const newIndex = items.findIndex((item) => item.id === overId);
             return arrayMove(items, oldIndex, newIndex);
         });
-        // Note: Persisting order requires an 'order' field in DB, skipping for MVP
     };
 
     return { tasks, setTasks, updateTask, deleteTask, createTask, addTasks, addTag, moveTask, isLoading };
