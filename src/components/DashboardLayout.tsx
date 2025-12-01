@@ -56,7 +56,7 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
                             label="My Workspace"
                             isOpen={isSidebarOpen}
                             active={currentView === 'workspace' || currentView === 'board' || currentView === 'list' || currentView === 'calendar'}
-                            onClick={() => onViewChange('workspace')}
+                            onClick={() => onViewChange('board')}
                         />
                     </div>
 

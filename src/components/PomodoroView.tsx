@@ -22,10 +22,11 @@ export function PomodoroView() {
         } else if (timeLeft === 0) {
             setIsActive(false);
             // Play completion sound
-            if (typeof window !== 'undefined') {
-                const audio = new Audio('/sounds/whoosh.mp3');
-                audio.play().catch(() => { });
-            }
+            // Play completion sound - Disabled due to missing assets
+            // if (typeof window !== 'undefined') {
+            //     const audio = new Audio('/sounds/whoosh.mp3');
+            //     audio.play().catch(() => { });
+            // }
             // Show notification
             toast.success("Time's up! Great job. 🎉", {
                 description: focusReason ? `Completed goal: ${focusReason}` : "Take a break and refresh.",
