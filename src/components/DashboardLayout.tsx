@@ -10,19 +10,21 @@ import {
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 import { useProfile } from '@/hooks/useProfile';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
-    currentView: string;
-    onViewChange: (view: string) => void;
-    activeWorkspaceId: string;
-    onWorkspaceChange: (id: string, name: string) => void;
+    // Removed old props: currentView, onViewChange, activeWorkspaceId, onWorkspaceChange
+    // activeWorkspaceId is now handled via context if needed, or we can keep it if passed
+    // But for navigation we use routes now.
 }
 
-export function DashboardLayout({ children, currentView, onViewChange, activeWorkspaceId, onWorkspaceChange }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const { profile } = useProfile();
     const { isConnected } = useAccount();
+    const pathname = usePathname();
 
     return (
         <div className="flex h-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-500">
@@ -51,32 +53,35 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
                     {/* Workspace - Single Only */}
                     <div className="space-y-1">
                         {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Workspace</h3>}
-                        <SidebarItem
-                            icon={<Database size={18} />}
-                            label="My Workspace"
-                            isOpen={isSidebarOpen}
-                            active={currentView === 'workspace' || currentView === 'board' || currentView === 'list' || currentView === 'calendar'}
-                            onClick={() => onViewChange('board')}
-                        />
+                        <Link href="/">
+                            <SidebarItem
+                                icon={<Database size={18} />}
+                                label="My Workspace"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/'}
+                            />
+                        </Link>
                     </div>
 
                     {/* Private Pages */}
                     <div className="space-y-1">
                         {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Private</h3>}
-                        <SidebarItem
-                            icon={<Lock size={18} />}
-                            label="Encrypted Notes"
-                            isOpen={isSidebarOpen}
-                            onClick={() => onViewChange('notes')}
-                            active={currentView === 'notes'}
-                        />
-                        <SidebarItem
-                            icon={<Clock size={18} />}
-                            label="Focus Mode"
-                            isOpen={isSidebarOpen}
-                            onClick={() => onViewChange('pomodoro')}
-                            active={currentView === 'pomodoro'}
-                        />
+                        <Link href="/notes">
+                            <SidebarItem
+                                icon={<Lock size={18} />}
+                                label="Encrypted Notes"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/notes'}
+                            />
+                        </Link>
+                        <Link href="/focus">
+                            <SidebarItem
+                                icon={<Clock size={18} />}
+                                label="Focus Mode"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/focus'}
+                            />
+                        </Link>
                     </div>
                 </div>
 
@@ -95,19 +100,14 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
             <div className="flex-1 flex flex-col min-w-0 bg-[url('/grid.svg')] bg-fixed">
                 {/* Header */}
                 <header className="h-16 border-b border-[var(--border-color)] bg-[var(--card-bg)] backdrop-blur-md flex items-center justify-between px-6 z-10 transition-colors duration-500">
-                    {/* Left: View Switcher */}
+                    {/* Left: View Switcher - Only show on Board view for now or keep generic */}
                     <div className="flex items-center gap-6">
-                        <div className="flex items-center bg-[var(--card-bg)] rounded-lg p-1 border border-[var(--border-color)]">
-                            <ViewTab icon={<Grid size={14} />} label="Board" active={currentView === 'board'} onClick={() => onViewChange('board')} />
-                            <ViewTab icon={<List size={14} />} label="List" active={currentView === 'list'} onClick={() => onViewChange('list')} />
-                            <ViewTab icon={<Calendar size={14} />} label="Calendar" active={currentView === 'calendar'} onClick={() => onViewChange('calendar')} />
-                            <ViewTab icon={<Clock size={14} />} label="Timeline" active={currentView === 'timeline'} onClick={() => onViewChange('timeline')} />
-                        </div>
+                        {/* We can keep tabs if we want sub-navigation, but for now just hiding or keeping static */}
                     </div>
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-4">
-                        <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
+                        <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" showAvatar={false} />
                     </div>
                 </header>
 
@@ -130,24 +130,12 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
 
 function SidebarItem({ icon, label, isOpen, active = false, onClick }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void }) {
     return (
-        <button
+        <div
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group ${active ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'hover:bg-white/5 text-neutral-400 hover:text-white'}`}
         >
             <span className={`${active ? 'text-purple-400' : 'text-neutral-500 group-hover:text-white'}`}>{icon}</span>
             {isOpen && <span className="text-sm font-medium whitespace-nowrap">{label}</span>}
-        </button>
-    );
-}
-
-function ViewTab({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/5'}`}
-        >
-            {icon}
-            <span>{label}</span>
-        </button>
+        </div>
     );
 }

@@ -21,6 +21,7 @@ import { ErrorSuppressor } from "@/components/ErrorSuppressor";
 
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Web3Provider } from "@/providers/Web3Provider";
+import { WorkspaceProvider } from "@/providers/WorkspaceProvider";
 
 export default function RootLayout({
   children,
@@ -35,8 +36,10 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <Web3Provider>
-            <ErrorSuppressor />
-            {children}
+            <WorkspaceProvider>
+              <ErrorSuppressor />
+              {children}
+            </WorkspaceProvider>
           </Web3Provider>
         </ThemeProvider>
       </body>
