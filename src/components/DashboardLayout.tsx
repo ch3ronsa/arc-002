@@ -72,7 +72,7 @@ export function DashboardLayout({ children, currentView, onViewChange, activeWor
                         />
                         <SidebarItem
                             icon={<Clock size={18} />}
-                            label="Kendini Test Et"
+                            label="Focus Mode"
                             isOpen={isSidebarOpen}
                             onClick={() => onViewChange('pomodoro')}
                             active={currentView === 'pomodoro'}

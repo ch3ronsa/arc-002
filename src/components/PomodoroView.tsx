@@ -27,8 +27,8 @@ export function PomodoroView() {
                 audio.play().catch(() => { });
             }
             // Show notification
-            toast.success("Süre doldu! Harika iş çıkardın. 🎉", {
-                description: focusReason ? `Tamamlanan hedef: ${focusReason}` : "Bir mola ver ve tazelen.",
+            toast.success("Time's up! Great job. 🎉", {
+                description: focusReason ? `Completed goal: ${focusReason}` : "Take a break and refresh.",
                 duration: 5000,
             });
         }
@@ -66,7 +66,7 @@ export function PomodoroView() {
             {/* Left Side: Timer */}
             <div className="flex flex-col items-center">
                 <h1 className="text-5xl font-bold mb-12 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                    Kendini Test Et
+                    Focus Mode
                 </h1>
 
                 {/* Circular Progress */}
@@ -127,7 +127,7 @@ export function PomodoroView() {
                             onClick={() => setIsDurationPickerOpen(!isDurationPickerOpen)}
                             className="px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center gap-2 min-w-[140px] justify-between"
                         >
-                            <span className="text-neutral-300 font-medium">{duration} dakika</span>
+                            <span className="text-neutral-300 font-medium">{duration} minutes</span>
                             <ChevronUp size={16} className={`text-neutral-500 transition-transform ${isDurationPickerOpen ? 'rotate-180' : ''}`} />
                         </button>
 
@@ -145,11 +145,11 @@ export function PomodoroView() {
                                                 key={mins}
                                                 onClick={() => updateDuration(mins)}
                                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all text-left ${duration === mins
-                                                        ? 'bg-blue-500/20 text-blue-400'
-                                                        : 'hover:bg-white/5 text-neutral-400 hover:text-neutral-200'
+                                                    ? 'bg-blue-500/20 text-blue-400'
+                                                    : 'hover:bg-white/5 text-neutral-400 hover:text-neutral-200'
                                                     }`}
                                             >
-                                                {mins} dakika
+                                                {mins} minutes
                                             </button>
                                         ))}
                                     </div>
@@ -163,23 +163,23 @@ export function PomodoroView() {
             {/* Right Side: Focus Goal */}
             <div className="w-full max-w-md">
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm">
-                    <h3 className="text-xl font-bold text-white mb-2">Odaklanma Hedefi</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">Focus Goal</h3>
                     <p className="text-neutral-400 text-sm mb-6">
-                        Bu süreyi ne için kullanıyorsun? Hedefini yazmak odaklanmana yardımcı olur.
+                        What are you using this time for? Writing down your goal helps you focus.
                     </p>
 
                     <div className="relative">
                         <textarea
                             value={focusReason}
                             onChange={(e) => setFocusReason(e.target.value)}
-                            placeholder="Örn: React hooklarını öğrenmek, Blog yazısını bitirmek..."
+                            placeholder="Ex: Learn React hooks, Finish blog post..."
                             className="w-full h-40 bg-black/20 border border-white/10 rounded-xl p-4 text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all resize-none"
                         />
                         {focusReason && (
                             <div className="absolute bottom-4 right-4">
                                 <span className="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">
                                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                    Hedef Belirlendi
+                                    Goal Set
                                 </span>
                             </div>
                         )}
@@ -188,15 +188,15 @@ export function PomodoroView() {
                     <div className="mt-6 flex flex-col gap-3">
                         <div className="flex items-center gap-3 text-sm text-neutral-500">
                             <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">1</div>
-                            <span>Süreyi belirle</span>
+                            <span>Set duration</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-neutral-500">
                             <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">2</div>
-                            <span>Hedefini yaz</span>
+                            <span>Write your goal</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-neutral-500">
                             <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 border border-green-500/20">3</div>
-                            <span>Başlat ve odaklan!</span>
+                            <span>Start and focus!</span>
                         </div>
                     </div>
                 </div>
