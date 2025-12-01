@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lock, Plus, Search, Tag, Calendar, Shield, Upload, Trash2, Eye, EyeOff, FileText, MoreVertical, Anchor } from 'lucide-react';
+import { Lock, Plus, Search, Tag, Calendar, Shield, Upload, Trash2, Eye, EyeOff, FileText, MoreVertical, Anchor, Save } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { supabase } from '@/lib/supabase';
+import { LockScreen } from './LockScreen';
+import { encryptData, decryptData } from '@/lib/encryption';
 
 const TiptapEditor = dynamic(() => import('./editor/TiptapEditor').then(mod => mod.TiptapEditor), { ssr: false });
 
@@ -30,6 +32,8 @@ interface Note {
     encrypted: boolean;
     onChain: boolean;
     txHash?: string;
+    salt?: string; // For encryption
+    iv?: string;   // For encryption
 }
 
 const DEFAULT_NOTE_CONTENT = {
@@ -49,6 +53,10 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
     const [searchQuery, setSearchQuery] = useState('');
     const [mounted, setMounted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Encryption State
+    const [isLocked, setIsLocked] = useState(true);
+    const [password, setPassword] = useState<string | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -89,10 +97,13 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                     createdAt: n.created_at,
                     updatedAt: n.updated_at,
                     encrypted: n.is_encrypted || true,
-                    onChain: false // Need to add this to DB schema if needed
+                    onChain: false, // Need to add this to DB schema if needed
+                    salt: n.salt, // Assuming we add these columns or store in content wrapper
+                    iv: n.iv
                 })) || [];
 
                 setNotes(mappedNotes);
+                // Don't auto-select if locked to avoid confusion, or select but show blurred
                 if (mappedNotes.length > 0 && !selectedNote) {
                     setSelectedNote(mappedNotes[0]);
                 }
@@ -113,14 +124,24 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         }
     }, [isConfirmed, hash]);
 
+    const handleUnlock = (pwd: string) => {
+        setPassword(pwd);
+        setIsLocked(false);
+        toast.success("Notes unlocked");
+    };
+
     const handleCreateNote = async () => {
         if (!address) {
             toast.error('Please connect your wallet');
             return;
         }
+        if (isLocked) {
+            toast.error('Please unlock notes first');
+            return;
+        }
 
         const newNote: Note = {
-            id: crypto.randomUUID(), // Generate UUID for DB compatibility
+            id: crypto.randomUUID(),
             title: 'Untitled Page',
             content: DEFAULT_NOTE_CONTENT,
             tags: [],
@@ -130,26 +151,56 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
             onChain: false,
         };
 
-        // Optimistic update
         setNotes([newNote, ...notes]);
         setSelectedNote(newNote);
 
-        const { error } = await supabase
-            .from('notes')
-            .insert({
-                id: newNote.id,
-                wallet_address: address,
-                workspace_id: workspaceId,
-                title: newNote.title,
-                content: JSON.stringify(newNote.content),
-                is_encrypted: true
-            });
+        // Save immediately (encrypted)
+        await saveNoteToSupabase(newNote);
+    };
 
-        if (error) {
-            console.error('Error creating note:', error);
-            toast.error('Failed to create note');
-            // Revert
-            setNotes(prev => prev.filter(n => n.id !== newNote.id));
+    const saveNoteToSupabase = async (note: Note) => {
+        if (!address || !password) return;
+
+        try {
+            // Encrypt content
+            const { encrypted, salt, iv } = await encryptData(note.content, password);
+
+            // We store the encrypted string in the content field for now, 
+            // or we should update schema. For MVP, let's store a wrapper object if schema allows JSONB
+            // Schema is JSONB for content.
+            const encryptedContentWrapper = {
+                encryptedData: encrypted,
+                salt,
+                iv,
+                isEncryptedWrapper: true
+            };
+
+            const { error } = await supabase
+                .from('notes')
+                .upsert({
+                    id: note.id,
+                    wallet_address: address,
+                    workspace_id: workspaceId,
+                    title: note.title,
+                    content: encryptedContentWrapper, // Store encrypted wrapper
+                    is_encrypted: true,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error saving note:', error);
+            toast.error('Failed to save note');
+        }
+    };
+
+    const handleSave = async () => {
+        if (selectedNote) {
+            toast.promise(saveNoteToSupabase(selectedNote), {
+                loading: 'Encrypting and saving...',
+                success: 'Note saved securely',
+                error: 'Failed to save'
+            });
         }
     };
 
@@ -157,7 +208,6 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         if (!address) return;
 
         if (confirm('Are you sure you want to delete this page?')) {
-            // Optimistic update
             const newNotes = notes.filter(n => n.id !== id);
             setNotes(newNotes);
             if (selectedNote?.id === id) {
@@ -177,26 +227,12 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         }
     };
 
-    const handleUpdateNote = async (updatedNote: Note) => {
-        if (!address) return;
-
-        // Optimistic update (local state is already updated by input/editor)
+    const handleUpdateNote = (updatedNote: Note) => {
+        // Update local state immediately
         setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
-
-        // Debounce DB update could be added here
-        const { error } = await supabase
-            .from('notes')
-            .update({
-                title: updatedNote.title,
-                content: JSON.stringify(updatedNote.content),
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', updatedNote.id)
-            .eq('wallet_address', address);
-
-        if (error) {
-            console.error('Error updating note:', error);
-        }
+        // We don't auto-save to DB on every keystroke for encryption performance/UX
+        // User must click Save or we can implement debounce later.
+        // For now, let's rely on the manual Save button as requested.
     };
 
     const handleAnchorDocument = () => {
@@ -217,21 +253,61 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         });
     };
 
+    // Decrypt selected note content on selection if locked/unlocked
+    const [decryptedContent, setDecryptedContent] = useState<any>(null);
+
+    useEffect(() => {
+        const decryptCurrentNote = async () => {
+            if (!selectedNote || !password) {
+                setDecryptedContent(null);
+                return;
+            }
+
+            // Check if content is already decrypted (legacy or new local)
+            // If it matches the wrapper structure, it needs decryption
+            const content = selectedNote.content;
+            if (content && content.isEncryptedWrapper) {
+                try {
+                    const decrypted = await decryptData(
+                        content.encryptedData,
+                        password,
+                        content.salt,
+                        content.iv
+                    );
+                    setDecryptedContent(decrypted);
+                } catch (e) {
+                    console.error("Decryption failed", e);
+                    toast.error("Failed to decrypt note. Wrong password?");
+                }
+            } else {
+                // Not encrypted or legacy plain text
+                setDecryptedContent(content);
+            }
+        };
+
+        if (!isLocked) {
+            decryptCurrentNote();
+        }
+    }, [selectedNote, password, isLocked]);
+
+
     const filteredNotes = notes.filter(note =>
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     return (
-        <div className="w-full h-full flex bg-[#050508] text-neutral-200">
+        <div className="w-full h-full flex bg-[var(--background)] text-[var(--foreground)] relative">
+            {isLocked && <LockScreen onUnlock={handleUnlock} />}
+
             {/* Sidebar */}
-            <div className="w-64 border-r border-white/10 flex flex-col bg-neutral-900/50 backdrop-blur-xl">
-                <div className="p-4 border-b border-white/10">
+            <div className={clsx("w-64 border-r border-[var(--border-color)] flex flex-col bg-[var(--card-bg)] backdrop-blur-xl transition-all", isLocked && "blur-sm pointer-events-none")}>
+                <div className="p-4 border-b border-[var(--border-color)]">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Pages</h2>
+                        <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Pages</h2>
                         <button
                             onClick={handleCreateNote}
-                            className="p-1.5 rounded-md hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+                            className="p-1.5 rounded-md hover:bg-white/10 text-neutral-400 hover:text-[var(--foreground)] transition-colors"
                         >
                             <Plus size={16} />
                         </button>
@@ -243,7 +319,7 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                             placeholder="Search pages..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-3 py-1.5 bg-black/20 border border-white/10 rounded-md text-xs text-neutral-300 placeholder:text-neutral-600 focus:outline-none focus:border-white/20"
+                            className="w-full pl-9 pr-3 py-1.5 bg-black/20 border border-[var(--border-color)] rounded-md text-xs text-[var(--foreground)] placeholder:text-neutral-600 focus:outline-none focus:border-purple-500/50"
                         />
                     </div>
                 </div>
@@ -257,10 +333,10 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                             onClick={() => setSelectedNote(note)}
                             className={twMerge(
                                 "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group",
-                                selectedNote?.id === note.id ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                                selectedNote?.id === note.id ? "bg-purple-500/10 text-purple-400" : "text-neutral-400 hover:bg-white/5 hover:text-[var(--foreground)]"
                             )}
                         >
-                            <FileText size={16} className={selectedNote?.id === note.id ? "text-blue-400" : "text-neutral-500"} />
+                            <FileText size={16} className={selectedNote?.id === note.id ? "text-purple-400" : "text-neutral-500"} />
                             <span className="truncate flex-1 text-left">{note.title}</span>
                             {note.onChain && <Shield size={12} className="text-blue-400" />}
                         </button>
@@ -269,13 +345,13 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
             </div>
 
             {/* Main Editor Area */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+            <div className={clsx("flex-1 flex flex-col h-full overflow-hidden relative transition-all", isLocked && "blur-md pointer-events-none")}>
                 {selectedNote ? (
                     <>
                         {/* Header */}
-                        <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-neutral-900/30 backdrop-blur-sm z-10">
+                        <div className="h-14 border-b border-[var(--border-color)] flex items-center justify-between px-6 bg-[var(--card-bg)] backdrop-blur-sm z-10">
                             <div className="flex items-center gap-2 text-sm text-neutral-500">
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 text-purple-400">
                                     <Lock size={12} /> Encrypted
                                 </span>
                                 {selectedNote.onChain && (
@@ -292,13 +368,19 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
 
                             <div className="flex items-center gap-2">
                                 <button
+                                    onClick={handleSave}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+                                >
+                                    <Save size={14} /> Save
+                                </button>
+                                <button
                                     onClick={handleAnchorDocument}
                                     disabled={isPending || isConfirming || selectedNote.onChain}
                                     className={twMerge(
                                         "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
                                         selectedNote.onChain
                                             ? "bg-blue-500/10 text-blue-400 border-blue-500/20 cursor-default"
-                                            : "bg-white/5 text-neutral-300 border-white/10 hover:bg-white/10 hover:text-white"
+                                            : "bg-white/5 text-neutral-300 border-[var(--border-color)] hover:bg-white/10 hover:text-white"
                                     )}
                                 >
                                     {isPending || isConfirming ? (
@@ -335,13 +417,13 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                                         handleUpdateNote(updated);
                                     }}
                                     placeholder="Untitled Page"
-                                    className="w-full bg-transparent text-4xl font-bold text-white placeholder:text-neutral-700 border-none outline-none mb-8"
+                                    className="w-full bg-transparent text-4xl font-bold text-[var(--foreground)] placeholder:text-neutral-700 border-none outline-none mb-8"
                                 />
 
                                 {/* Tiptap Editor */}
-                                {mounted && (
+                                {mounted && decryptedContent && (
                                     <TiptapEditor
-                                        content={selectedNote.content}
+                                        content={decryptedContent}
                                         onChange={(content) => {
                                             const updated = { ...selectedNote, content, updatedAt: new Date().toISOString() };
                                             setSelectedNote(updated);

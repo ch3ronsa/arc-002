@@ -21,12 +21,6 @@ export function PomodoroView() {
             }, 1000);
         } else if (timeLeft === 0) {
             setIsActive(false);
-            // Play completion sound
-            // Play completion sound - Disabled due to missing assets
-            // if (typeof window !== 'undefined') {
-            //     const audio = new Audio('/sounds/whoosh.mp3');
-            //     audio.play().catch(() => { });
-            // }
             // Show notification
             toast.success("Time's up! Great job. 🎉", {
                 description: focusReason ? `Completed goal: ${focusReason}` : "Take a break and refresh.",
@@ -62,7 +56,7 @@ export function PomodoroView() {
     const progress = ((duration * 60 - timeLeft) / (duration * 60)) * 100;
 
     return (
-        <div className="flex flex-col lg:flex-row items-center justify-center h-full p-8 gap-12 relative max-w-6xl mx-auto">
+        <div className="flex flex-col lg:flex-row items-center justify-center h-full p-8 gap-12 relative max-w-6xl mx-auto text-[var(--foreground)]">
 
             {/* Left Side: Timer */}
             <div className="flex flex-col items-center">
@@ -101,7 +95,7 @@ export function PomodoroView() {
                         </defs>
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={`font-mono text-7xl font-bold ${isActive ? 'text-blue-400' : 'text-neutral-300'}`}>
+                        <span className={`font-mono text-7xl font-bold ${isActive ? 'text-blue-400' : 'text-[var(--foreground)]'}`}>
                             {formatTime(timeLeft)}
                         </span>
                     </div>
@@ -111,7 +105,7 @@ export function PomodoroView() {
                 <div className="flex items-center gap-4 justify-center relative">
                     <button
                         onClick={resetTimer}
-                        className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                        className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--border-color)] transition-all"
                     >
                         <RotateCcw size={24} className="text-neutral-400" />
                     </button>
@@ -126,9 +120,9 @@ export function PomodoroView() {
                     <div className="relative">
                         <button
                             onClick={() => setIsDurationPickerOpen(!isDurationPickerOpen)}
-                            className="px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center gap-2 min-w-[140px] justify-between"
+                            className="px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--border-color)] transition-all flex items-center gap-2 min-w-[140px] justify-between"
                         >
-                            <span className="text-neutral-300 font-medium">{duration} minutes</span>
+                            <span className="text-[var(--foreground)] font-medium">{duration} minutes</span>
                             <ChevronUp size={16} className={`text-neutral-500 transition-transform ${isDurationPickerOpen ? 'rotate-180' : ''}`} />
                         </button>
 
@@ -138,7 +132,7 @@ export function PomodoroView() {
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute bottom-full mb-2 left-0 w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-2 shadow-xl z-50 max-h-60 overflow-y-auto custom-scrollbar"
+                                    className="absolute bottom-full mb-2 left-0 w-full bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-2 shadow-xl z-50 max-h-60 overflow-y-auto custom-scrollbar"
                                 >
                                     <div className="flex flex-col gap-1">
                                         {[5, 10, 15, 20, 25, 30, 45, 60, 90].map((mins) => (
@@ -147,7 +141,7 @@ export function PomodoroView() {
                                                 onClick={() => updateDuration(mins)}
                                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all text-left ${duration === mins
                                                     ? 'bg-blue-500/20 text-blue-400'
-                                                    : 'hover:bg-white/5 text-neutral-400 hover:text-neutral-200'
+                                                    : 'hover:bg-white/5 text-neutral-400 hover:text-[var(--foreground)]'
                                                     }`}
                                             >
                                                 {mins} minutes
@@ -163,8 +157,8 @@ export function PomodoroView() {
 
             {/* Right Side: Focus Goal */}
             <div className="w-full max-w-md">
-                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm">
-                    <h3 className="text-xl font-bold text-white mb-2">Focus Goal</h3>
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl p-8 backdrop-blur-sm">
+                    <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">Focus Goal</h3>
                     <p className="text-neutral-400 text-sm mb-6">
                         What are you using this time for? Writing down your goal helps you focus.
                     </p>
@@ -174,7 +168,7 @@ export function PomodoroView() {
                             value={focusReason}
                             onChange={(e) => setFocusReason(e.target.value)}
                             placeholder="Ex: Learn React hooks, Finish blog post..."
-                            className="w-full h-40 bg-black/20 border border-white/10 rounded-xl p-4 text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all resize-none"
+                            className="w-full h-40 bg-black/20 border border-[var(--border-color)] rounded-xl p-4 text-[var(--foreground)] placeholder:text-neutral-600 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all resize-none"
                         />
                         {focusReason && (
                             <div className="absolute bottom-4 right-4">
