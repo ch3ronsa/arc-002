@@ -28,7 +28,7 @@ import { TaskCard } from "./TaskCard";
 import { useAccount, useWriteContract } from "wagmi";
 import { toast } from "sonner";
 
-const CONTRACT_ADDRESS = "0xc4e0aA308f18010305104EAb60b16ed8f1955bc5";
+const CONTRACT_ADDRESS = "0xeB282dF68897C6245526e9BFD88e82eF5BcbD5c2";
 const TASK_JOURNAL_ABI = [
     {
         inputs: [{ internalType: "string[]", name: "taskTitles", type: "string[]" }],
@@ -342,7 +342,7 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
                     playWhoosh();
                     return `Archive Successful! Tx: ${data}`;
                 },
-                error: 'Archive Failed',
+                error: (err) => `Archive Failed: ${err.message || 'Unknown error'}`,
             });
         } catch (error) {
             console.error("Archive failed:", error);

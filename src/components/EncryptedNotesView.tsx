@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Lock, Plus, Search, Tag, Calendar, Shield, Upload, Trash2, Eye, EyeOff, FileText, MoreVertical, Anchor, Save } from 'lucide-react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { supabase } from '@/lib/supabase';
 import { LockScreen } from './LockScreen';
+import { SetPasswordScreen } from './SetPasswordScreen';
 import { encryptData, decryptData } from '@/lib/encryption';
 
 const TiptapEditor = dynamic(() => import('./editor/TiptapEditor').then(mod => mod.TiptapEditor), { ssr: false });
@@ -20,7 +21,7 @@ const ARC_JOURNAL_ABI = [
 ];
 
 // Placeholder Contract Address - UPDATE THIS AFTER DEPLOYMENT
-const ARC_JOURNAL_ADDRESS = "0xc4e0aA308f18010305104EAb60b16ed8f1955bc5";
+const ARC_JOURNAL_ADDRESS = "0xeB282dF68897C6245526e9BFD88e82eF5BcbD5c2";
 
 interface Note {
     id: string;
@@ -62,8 +63,20 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         setMounted(true);
     }, []);
 
+    // Check if user has password set on-chain
+    const { data: hasPasswordData, isLoading: isCheckingPassword } = useReadContract({
+        address: ARC_JOURNAL_ADDRESS,
+        abi: ["function hasPassword(address _user) external view returns (bool)"],
+        functionName: 'hasPassword',
+        args: address ? [address] : undefined,
+        chainId: 5042002,
+    });
+
+    const hasPassword = hasPasswordData as boolean;
+    const [passwordSetupComplete, setPasswordSetupComplete] = useState(false);
+
     // Wagmi Hooks
-    const { data: hash, writeContract, isPending } = useWriteContract();
+    const { data: hash, writeContractAsync, isPending } = useWriteContract();
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
         hash,
     });
@@ -235,7 +248,7 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         // For now, let's rely on the manual Save button as requested.
     };
 
-    const handleAnchorDocument = () => {
+    const handleAnchorDocument = async () => {
         if (!selectedNote || !address) {
             toast.error("Please connect your wallet first");
             return;
@@ -244,13 +257,23 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         const contentString = JSON.stringify(selectedNote.content);
         const mockHash = "0x" + Array.from(contentString).reduce((hash, char) => 0 | (31 * hash + char.charCodeAt(0)), 0).toString(16).padStart(64, '0');
 
-        writeContract({
-            address: ARC_JOURNAL_ADDRESS,
-            abi: ARC_JOURNAL_ABI,
-            functionName: 'anchorDocument',
-            args: [selectedNote.id, mockHash],
-            chainId: 5042002,
-        });
+        try {
+            const promise = writeContractAsync({
+                address: ARC_JOURNAL_ADDRESS,
+                abi: ARC_JOURNAL_ABI,
+                functionName: 'anchorDocument',
+                args: [selectedNote.id, mockHash],
+                chainId: 5042002,
+            });
+
+            toast.promise(promise, {
+                loading: 'Anchoring document...',
+                success: 'Transaction sent! Waiting for confirmation...',
+                error: (err) => `Anchoring Failed: ${err.message || 'Unknown error'}`,
+            });
+        } catch (error) {
+            console.error("Anchoring failed:", error);
+        }
     };
 
     // Decrypt selected note content on selection if locked/unlocked
@@ -298,7 +321,18 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
 
     return (
         <div className="w-full h-full flex bg-[var(--background)] text-[var(--foreground)] relative">
-            {isLocked && <LockScreen onUnlock={handleUnlock} />}
+            {/* Show SetPasswordScreen if user doesn't have password and hasn't just completed setup */}
+            {!isCheckingPassword && !hasPassword && !passwordSetupComplete && (
+                <SetPasswordScreen onPasswordSet={(pwd) => {
+                    setPassword(pwd);
+                    setPasswordSetupComplete(true);
+                    setIsLocked(false);
+                    toast.success("Password set! You can now create notes.");
+                }} />
+            )}
+
+            {/* Show LockScreen if password exists but notes are locked */}
+            {hasPassword && isLocked && <LockScreen onUnlock={handleUnlock} />}
 
             {/* Sidebar */}
             <div className={clsx("w-64 border-r border-[var(--border-color)] flex flex-col bg-[var(--card-bg)] backdrop-blur-xl transition-all", isLocked && "blur-sm pointer-events-none")}>
