@@ -1,68 +1,107 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Unlock, ArrowRight } from 'lucide-react';
+import { Lock, ArrowRight } from 'lucide-react';
+import { useAccount, useReadContract } from 'wagmi';
 import { toast } from 'sonner';
+
+const ARC_JOURNAL_ADDRESS = "0xeB282dF68897C6245526e9BFD88e82eF5BcbD5c2";
 
 interface LockScreenProps {
     onUnlock: (password: string) => void;
 }
 
 export function LockScreen({ onUnlock }: LockScreenProps) {
+    const { address } = useAccount();
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Fetch on-chain password hash
+    const { data: onChainHash } = useReadContract({
+        address: ARC_JOURNAL_ADDRESS,
+        abi: ["function userPasswordHashes(address) view returns (bytes32)"],
+        functionName: 'userPasswordHashes',
+        args: address ? [address] : undefined,
+        chainId: 5042002,
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!password.trim()) return;
+        if (!password || !address || !onChainHash) return;
 
-        setIsLoading(true);
-        // Simulate a small delay for better UX or actual verification if needed
-        setTimeout(() => {
-            onUnlock(password);
-            setIsLoading(false);
-        }, 500);
+        setIsVerifying(true);
+
+        try {
+            // Create SHA-256 hash of entered password
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            // Compare with on-chain hash
+            if (hashHex.toLowerCase() === (onChainHash as string).toLowerCase()) {
+                onUnlock(password);
+            } else {
+                toast.error('Incorrect password');
+                setPassword('');
+            }
+        } catch (error) {
+            console.error('Password verification failed:', error);
+            toast.error('Verification failed');
+        } finally {
+            setIsVerifying(false);
+        }
     };
 
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--background)]/80 backdrop-blur-md transition-all duration-500">
-            <div className="w-full max-w-md p-8 rounded-2xl bg-[var(--card-bg)] border border-[var(--border-color)] shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300">
-                <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-6">
-                    <Lock size={32} className="text-purple-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-md p-8 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl shadow-2xl">
+                {/* Icon */}
+                <div className="flex justify-center mb-6">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                        <Lock className="text-white" size={40} />
+                    </div>
                 </div>
 
-                <h2 className="text-2xl font-bold text-[var(--foreground)] mb-2">Encrypted Notes</h2>
-                <p className="text-neutral-500 mb-8">Enter your password to decrypt and access your private notes.</p>
+                {/* Title */}
+                <h2 className="text-2xl font-bold text-center text-[var(--foreground)] mb-2">
+                    Encrypted Notes
+                </h2>
+                <p className="text-center text-neutral-400 text-sm mb-8">
+                    Enter your password to decrypt and access your private notes.
+                </p>
 
-                <form onSubmit={handleSubmit} className="w-full space-y-4">
-                    <div className="relative">
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter password..."
-                            className="w-full px-4 py-3 bg-black/20 border border-[var(--border-color)] rounded-xl text-[var(--foreground)] placeholder:text-neutral-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
-                            autoFocus
-                        />
-                    </div>
+                {/* Form */}
+                <form onSubmit={handleSubmit}>
+                    <input
+                        type="password"
+                        placeholder="Enter password..."
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-4 py-3 mb-6 bg-black/20 border border-[var(--border-color)] rounded-xl text-[var(--foreground)] placeholder:text-neutral-600 focus:outline-none focus:border-purple-500/50"
+                        disabled={isVerifying}
+                    />
 
                     <button
                         type="submit"
-                        disabled={!password || isLoading}
-                        className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20"
+                        disabled={!password || isVerifying}
+                        className="w-full px-6 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
-                        {isLoading ? (
-                            <span className="animate-pulse">Unlocking...</span>
+                        {isVerifying ? (
+                            'Verifying...'
                         ) : (
                             <>
-                                Unlock Notes <ArrowRight size={18} />
+                                Unlock Notes
+                                <ArrowRight size={18} />
                             </>
                         )}
                     </button>
                 </form>
 
-                <p className="mt-6 text-xs text-neutral-500">
-                    <span className="text-red-400/80">Warning:</span> If you lose your password, your encrypted notes cannot be recovered.
+                {/* Warning */}
+                <p className="text-xs text-red-400 text-center mt-6">
+                    <strong>Warning:</strong> If you lose your password, your encrypted notes cannot be recovered.
                 </p>
             </div>
         </div>
