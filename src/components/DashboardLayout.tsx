@@ -2,130 +2,118 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-    Layout, Lock, FileText, Settings, ChevronRight, ChevronDown, Plus,
-    Grid, List, Calendar, Clock, CreditCard, Activity, Search, Bell,
-    Menu, Zap, Database, Shield
-} from 'lucide-react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
-import { useProfile } from '@/hooks/useProfile';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+const { profile } = useProfile();
+const { isConnected } = useAccount();
+const pathname = usePathname();
 
-interface DashboardLayoutProps {
-    children: React.ReactNode;
-    // Removed old props: currentView, onViewChange, activeWorkspaceId, onWorkspaceChange
-    // activeWorkspaceId is now handled via context if needed, or we can keep it if passed
-    // But for navigation we use routes now.
-}
-
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-    const [isSidebarOpen, setSidebarOpen] = useState(true);
-    const { profile } = useProfile();
-    const { isConnected } = useAccount();
-    const pathname = usePathname();
-
-    return (
-        <div className="flex h-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-500">
-            {/* Sidebar */}
-            <motion.aside
-                initial={{ width: 260 }}
-                animate={{ width: isSidebarOpen ? 260 : 72 }}
-                className="h-full bg-[var(--card-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 relative z-20 backdrop-blur-xl"
-            >
-                {/* Sidebar Header */}
-                <div className="h-16 flex items-center px-4 border-b border-[var(--border-color)]">
-                    <div className={`flex items-center gap-3 ${!isSidebarOpen && 'justify-center w-full'}`}>
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
-                            <Zap size={18} className="text-white" />
-                        </div>
-                        {isSidebarOpen && (
-                            <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-                                ArcOS
-                            </span>
-                        )}
+return (
+    <div className="flex h-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-500">
+        {/* Sidebar */}
+        <motion.aside
+            initial={{ width: 260 }}
+            animate={{ width: isSidebarOpen ? 260 : 72 }}
+            className="h-full bg-[var(--card-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 relative z-20 backdrop-blur-xl"
+        >
+            {/* Sidebar Header */}
+            <div className="h-16 flex items-center px-4 border-b border-[var(--border-color)]">
+                <div className={`flex items-center gap-3 ${!isSidebarOpen && 'justify-center w-full'}`}>
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+                        <Zap size={18} className="text-white" />
                     </div>
+                    {isSidebarOpen && (
+                        <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+                            ArcOS
+                        </span>
+                    )}
                 </div>
-
-                {/* Sidebar Content */}
-                <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
-                    {/* Workspace - Single Only */}
-                    <div className="space-y-1">
-                        {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Workspace</h3>}
-                        <Link href="/">
-                            <SidebarItem
-                                icon={<Database size={18} />}
-                                label="My Workspace"
-                                isOpen={isSidebarOpen}
-                                active={pathname === '/'}
-                            />
-                        </Link>
-                    </div>
-
-                    {/* Private Pages */}
-                    <div className="space-y-1">
-                        {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Private</h3>}
-                        <Link href="/notes">
-                            <SidebarItem
-                                icon={<Lock size={18} />}
-                                label="Encrypted Notes"
-                                isOpen={isSidebarOpen}
-                                active={pathname === '/notes'}
-                            />
-                        </Link>
-                        <Link href="/focus">
-                            <SidebarItem
-                                icon={<Clock size={18} />}
-                                label="Focus Mode"
-                                isOpen={isSidebarOpen}
-                                active={pathname === '/focus'}
-                            />
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Sidebar Footer */}
-                <div className="p-4 border-t border-[var(--border-color)]">
-                    <button
-                        onClick={() => setSidebarOpen(!isSidebarOpen)}
-                        className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-white/5 text-neutral-400 hover:text-[var(--foreground)] transition-colors"
-                    >
-                        {isSidebarOpen ? <ChevronRight size={18} className="rotate-180" /> : <ChevronRight size={18} />}
-                    </button>
-                </div>
-            </motion.aside>
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[url('/grid.svg')] bg-fixed">
-                {/* Header */}
-                <header className="h-16 border-b border-[var(--border-color)] bg-[var(--card-bg)] backdrop-blur-md flex items-center justify-between px-6 z-10 transition-colors duration-500">
-                    {/* Left: View Switcher - Only show on Board view for now or keep generic */}
-                    <div className="flex items-center gap-6">
-                        {/* We can keep tabs if we want sub-navigation, but for now just hiding or keeping static */}
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-4">
-                        <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" showAvatar={false} />
-                    </div>
-                </header>
-
-                {/* Page Content */}
-                <main className="flex-1 overflow-auto relative">
-                    {/* Ambient Background Glow */}
-                    <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-                        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 blur-[120px]"></div>
-                        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px]"></div>
-                    </div>
-
-                    <div className="relative z-10 h-full">
-                        {children}
-                    </div>
-                </main>
             </div>
+
+            {/* Sidebar Content */}
+            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
+                {/* Workspace - Single Only */}
+                <div className="space-y-1">
+                    {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Workspace</h3>}
+                    <Link href="/">
+                        <SidebarItem
+                            icon={<Database size={18} />}
+                            label="My Workspace"
+                            isOpen={isSidebarOpen}
+                            active={pathname === '/'}
+                        />
+                    </Link>
+                </div>
+
+                {/* Private Pages */}
+                <div className="space-y-1">
+                    {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Pages</h3>}
+                    <Link href="/notes">
+                        <SidebarItem
+                            icon={<FileText size={18} />}
+                            label="Notes"
+                            isOpen={isSidebarOpen}
+                            active={pathname === '/notes'}
+                        />
+                    </Link>
+                    <Link href="/encrypted-notes">
+                        <SidebarItem
+                            icon={<Lock size={18} />}
+                            label="Encrypted Notes"
+                            isOpen={isSidebarOpen}
+                            active={pathname === '/encrypted-notes'}
+                        />
+                    </Link>
+                    <Link href="/focus">
+                        <SidebarItem
+                            icon={<Clock size={18} />}
+                            label="Focus Mode"
+                            isOpen={isSidebarOpen}
+                            active={pathname === '/focus'}
+                        />
+                    </Link>
+                </div>
+            </div>
+
+            {/* Sidebar Footer */}
+            <div className="p-4 border-t border-[var(--border-color)]">
+                <button
+                    onClick={() => setSidebarOpen(!isSidebarOpen)}
+                    className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-white/5 text-neutral-400 hover:text-[var(--foreground)] transition-colors"
+                >
+                    {isSidebarOpen ? <ChevronRight size={18} className="rotate-180" /> : <ChevronRight size={18} />}
+                </button>
+            </div>
+        </motion.aside>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[url('/grid.svg')] bg-fixed">
+            {/* Header */}
+            <header className="h-16 border-b border-[var(--border-color)] bg-[var(--card-bg)] backdrop-blur-md flex items-center justify-between px-6 z-10 transition-colors duration-500">
+                {/* Left: View Switcher - Only show on Board view for now or keep generic */}
+                <div className="flex items-center gap-6">
+                    {/* We can keep tabs if we want sub-navigation, but for now just hiding or keeping static */}
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-4">
+                    <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" showAvatar={false} />
+                </div>
+            </header>
+
+            {/* Page Content */}
+            <main className="flex-1 overflow-auto relative">
+                {/* Ambient Background Glow */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                    <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 blur-[120px]"></div>
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px]"></div>
+                </div>
+
+                <div className="relative z-10 h-full">
+                    {children}
+                </div>
+            </main>
         </div>
-    );
+    </div>
+);
 }
 
 function SidebarItem({ icon, label, isOpen, active = false, onClick }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void }) {

@@ -1,15 +1,12 @@
 'use client';
 
-import { EncryptedNotesView } from "@/components/EncryptedNotesView";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { useWorkspace } from "@/providers/WorkspaceProvider";
+import { NotesView } from '@/components/NotesView';
+import DashboardLayout from '@/components/DashboardLayout';
 
 export default function NotesPage() {
-    const { activeWorkspace } = useWorkspace();
-
     return (
         <DashboardLayout>
-            <EncryptedNotesView workspaceId={activeWorkspace.id} />
+            <NotesView />
         </DashboardLayout>
     );
 }
