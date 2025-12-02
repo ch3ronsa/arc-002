@@ -37,38 +37,6 @@ return (
                         <SidebarItem
                             icon={<Database size={18} />}
                             label="My Workspace"
-                            isOpen={isSidebarOpen}
-                            active={pathname === '/'}
-                        />
-                    </Link>
-                </div>
-
-                {/* Private Pages */}
-                <div className="space-y-1">
-                    {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Pages</h3>}
-                    <Link href="/notes">
-                        <SidebarItem
-                            icon={<FileText size={18} />}
-                            label="Notes"
-                            isOpen={isSidebarOpen}
-                            active={pathname === '/notes'}
-                        />
-                    </Link>
-                    <Link href="/encrypted-notes">
-                        <SidebarItem
-                            icon={<Lock size={18} />}
-                            label="Encrypted Notes"
-                            isOpen={isSidebarOpen}
-                            active={pathname === '/encrypted-notes'}
-                        />
-                    </Link>
-                    <Link href="/focus">
-                        <SidebarItem
-                            icon={<Clock size={18} />}
-                            label="Focus Mode"
-                            isOpen={isSidebarOpen}
-                            active={pathname === '/focus'}
-                        />
                     </Link>
                 </div>
             </div>
