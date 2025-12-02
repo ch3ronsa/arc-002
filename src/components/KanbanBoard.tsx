@@ -28,7 +28,7 @@ import { TaskCard } from "./TaskCard";
 import { useAccount, useWriteContract } from "wagmi";
 import { toast } from "sonner";
 
-const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000"; // BURAYA GERÇEK KONTRAT ADRESİNİ YAZ
+const CONTRACT_ADDRESS = "0xc4e0aA308f18010305104EAb60b16ed8f1955bc5";
 const TASK_JOURNAL_ABI = [
     {
         inputs: [{ internalType: "string[]", name: "taskTitles", type: "string[]" }],
