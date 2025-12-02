@@ -9,9 +9,14 @@ import { twMerge } from 'tailwind-merge';
 
 const ARC_JOURNAL_ADDRESS = "0xeB282dF68897C6245526e9BFD88e82eF5BcbD5c2";
 const ARC_JOURNAL_ABI = [
-    "function setPasswordHash(bytes32 _passwordHash) external",
-    "event PasswordSet(address indexed user, uint256 timestamp)"
-];
+    {
+        name: 'setPasswordHash',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [{ name: '_passwordHash', type: 'bytes32' }],
+        outputs: []
+    }
+] as const;
 
 interface SetPasswordScreenProps {
     onPasswordSet: (password: string) => void;
