@@ -41,6 +41,7 @@ export function SetPasswordScreen({ onPasswordSet }: SetPasswordScreenProps) {
         console.log('🔍 handleSetPassword called');
         console.log('canSubmit:', canSubmit);
         console.log('address:', address);
+        console.log('writeContractAsync:', writeContractAsync);
 
         if (!address) {
             toast.error('Please connect your wallet first');
@@ -49,6 +50,12 @@ export function SetPasswordScreen({ onPasswordSet }: SetPasswordScreenProps) {
 
         if (!canSubmit) {
             toast.error('Please check password requirements');
+            return;
+        }
+
+        if (!writeContractAsync) {
+            toast.error('Wallet functionality not available. Please refresh the page.');
+            console.error('❌ writeContractAsync is undefined');
             return;
         }
 
@@ -61,32 +68,31 @@ export function SetPasswordScreen({ onPasswordSet }: SetPasswordScreenProps) {
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashHex = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             console.log('✅ Password hash created:', hashHex);
+            console.log('Contract address:', ARC_JOURNAL_ADDRESS);
+            console.log('Chain ID: 5042002');
 
             console.log('📡 Calling writeContractAsync...');
-            const promise = writeContractAsync({
-                address: ARC_JOURNAL_ADDRESS,
+
+            const txHash = await writeContractAsync({
+                address: ARC_JOURNAL_ADDRESS as `0x${string}`,
                 abi: ARC_JOURNAL_ABI,
                 functionName: 'setPasswordHash',
-                args: [hashHex],
+                args: [hashHex as `0x${string}`],
                 chainId: 5042002,
             });
 
-            toast.promise(promise, {
-                loading: 'Setting password on-chain...',
-                success: () => {
-                    console.log('✅ Password set successfully!');
-                    onPasswordSet(password);
-                    return 'Password set successfully!';
-                },
-                error: (err) => {
-                    console.error('❌ Transaction error:', err);
-                    return `Failed to set password: ${err.shortMessage || err.message || 'Unknown error'}`;
-                },
-            });
+            console.log('✅ Transaction sent! Hash:', txHash);
+            toast.success('Password set successfully!');
+            onPasswordSet(password);
 
-            await promise;
         } catch (error: any) {
             console.error("❌ Password setup failed:", error);
+            console.error("Error details:", {
+                message: error.message,
+                shortMessage: error.shortMessage,
+                cause: error.cause,
+                name: error.name
+            });
             toast.error(error.shortMessage || error.message || 'Transaction failed');
         }
     };
