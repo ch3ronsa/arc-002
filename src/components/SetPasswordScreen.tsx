@@ -38,16 +38,31 @@ export function SetPasswordScreen({ onPasswordSet }: SetPasswordScreenProps) {
     const canSubmit = passwordsMatch && isStrong;
 
     const handleSetPassword = async () => {
-        if (!canSubmit || !address) return;
+        console.log('🔍 handleSetPassword called');
+        console.log('canSubmit:', canSubmit);
+        console.log('address:', address);
 
-        // Create SHA-256 hash of password
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        if (!address) {
+            toast.error('Please connect your wallet first');
+            return;
+        }
+
+        if (!canSubmit) {
+            toast.error('Please check password requirements');
+            return;
+        }
 
         try {
+            // Create SHA-256 hash of password
+            console.log('📝 Creating password hash...');
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            console.log('✅ Password hash created:', hashHex);
+
+            console.log('📡 Calling writeContractAsync...');
             const promise = writeContractAsync({
                 address: ARC_JOURNAL_ADDRESS,
                 abi: ARC_JOURNAL_ABI,
@@ -56,16 +71,23 @@ export function SetPasswordScreen({ onPasswordSet }: SetPasswordScreenProps) {
                 chainId: 5042002,
             });
 
-            await toast.promise(promise, {
+            toast.promise(promise, {
                 loading: 'Setting password on-chain...',
                 success: () => {
+                    console.log('✅ Password set successfully!');
                     onPasswordSet(password);
                     return 'Password set successfully!';
                 },
-                error: (err) => `Failed to set password: ${err.message || 'Unknown error'}`,
+                error: (err) => {
+                    console.error('❌ Transaction error:', err);
+                    return `Failed to set password: ${err.shortMessage || err.message || 'Unknown error'}`;
+                },
             });
-        } catch (error) {
-            console.error("Password setup failed:", error);
+
+            await promise;
+        } catch (error: any) {
+            console.error("❌ Password setup failed:", error);
+            toast.error(error.shortMessage || error.message || 'Transaction failed');
         }
     };
 
@@ -83,9 +105,19 @@ export function SetPasswordScreen({ onPasswordSet }: SetPasswordScreenProps) {
                 <h2 className="text-2xl font-bold text-center text-[var(--foreground)] mb-2">
                     Set Your Password
                 </h2>
-                <p className="text-center text-neutral-400 text-sm mb-8">
+                <p className="text-center text-neutral-400 text-sm mb-2">
                     Create a secure password to encrypt your notes. This will be registered on-chain.
                 </p>
+                {!address && (
+                    <p className="text-center text-red-400 text-xs mb-6">
+                        ⚠️ Please connect your wallet first
+                    </p>
+                )}
+                {address && (
+                    <p className="text-center text-green-400 text-xs mb-6">
+                        ✅ Wallet connected: {address.slice(0, 6)}...{address.slice(-4)}
+                    </p>
+                )}
 
                 {/* Password Input */}
                 <div className="space-y-4 mb-6">
