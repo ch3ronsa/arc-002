@@ -14,11 +14,19 @@ import { encryptData, decryptData } from '@/lib/encryption';
 
 const TiptapEditor = dynamic(() => import('./editor/TiptapEditor').then(mod => mod.TiptapEditor), { ssr: false });
 
-// ArcJournal ABI (Human Readable)
+// ArcJournal ABI (JSON Format)
 const ARC_JOURNAL_ABI = [
-    "function anchorDocument(string memory _docId, string memory _contentHash) external",
-    "event DocumentAnchored(address indexed user, string docId, string contentHash, uint256 timestamp)"
-];
+    {
+        name: 'anchorDocument',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [
+            { name: '_docId', type: 'string' },
+            { name: '_contentHash', type: 'string' }
+        ],
+        outputs: []
+    }
+] as const;
 
 // Placeholder Contract Address - UPDATE THIS AFTER DEPLOYMENT
 const ARC_JOURNAL_ADDRESS = "0xeB282dF68897C6245526e9BFD88e82eF5BcbD5c2";
@@ -172,39 +180,36 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
     };
 
     const saveNoteToSupabase = async (note: Note) => {
-        if (!address || !password) return;
-
-        try {
-            // Encrypt content
-            const { encrypted, salt, iv } = await encryptData(note.content, password);
-
-            // We store the encrypted string in the content field for now, 
-            // or we should update schema. For MVP, let's store a wrapper object if schema allows JSONB
-            // Schema is JSONB for content.
-            const encryptedContentWrapper = {
-                encryptedData: encrypted,
-                salt,
-                iv,
-                isEncryptedWrapper: true
-            };
-
-            const { error } = await supabase
-                .from('notes')
-                .upsert({
-                    id: note.id,
-                    wallet_address: address,
-                    workspace_id: workspaceId,
-                    title: note.title,
-                    content: encryptedContentWrapper, // Store encrypted wrapper
-                    is_encrypted: true,
-                    updated_at: new Date().toISOString()
-                });
-
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error saving note:', error);
-            toast.error('Failed to save note');
+        if (!address || !password) {
+            throw new Error('Wallet not connected or password not set');
         }
+
+        // Encrypt content
+        const { encrypted, salt, iv } = await encryptData(note.content, password);
+
+        // We store the encrypted string in the content field for now, 
+        // or we should update schema. For MVP, let's store a wrapper object if schema allows JSONB
+        // Schema is JSONB for content.
+        const encryptedContentWrapper = {
+            encryptedData: encrypted,
+            salt,
+            iv,
+            isEncryptedWrapper: true
+        };
+
+        const { error } = await supabase
+            .from('notes')
+            .upsert({
+                id: note.id,
+                wallet_address: address,
+                workspace_id: workspaceId,
+                title: note.title,
+                content: encryptedContentWrapper, // Store encrypted wrapper
+                is_encrypted: true,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
     };
 
     const handleSave = async () => {
@@ -254,25 +259,33 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
             return;
         }
 
+        if (!writeContractAsync) {
+            toast.error('Wallet functionality not available. Please refresh the page.');
+            return;
+        }
+
         const contentString = JSON.stringify(selectedNote.content);
         const mockHash = "0x" + Array.from(contentString).reduce((hash, char) => 0 | (31 * hash + char.charCodeAt(0)), 0).toString(16).padStart(64, '0');
 
         try {
-            const promise = writeContractAsync({
-                address: ARC_JOURNAL_ADDRESS,
+            const txHash = await writeContractAsync({
+                address: ARC_JOURNAL_ADDRESS as `0x${string}`,
                 abi: ARC_JOURNAL_ABI,
                 functionName: 'anchorDocument',
                 args: [selectedNote.id, mockHash],
                 chainId: 5042002,
             });
 
-            toast.promise(promise, {
-                loading: 'Anchoring document...',
-                success: 'Transaction sent! Waiting for confirmation...',
-                error: (err) => `Anchoring Failed: ${err.message || 'Unknown error'}`,
-            });
-        } catch (error) {
+            console.log('✅ Anchor transaction sent:', txHash);
+            toast.success('Document anchored successfully!');
+
+            // Update local state
+            const updatedNote = { ...selectedNote, onChain: true, txHash: txHash };
+            setSelectedNote(updatedNote);
+            setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n));
+        } catch (error: any) {
             console.error("Anchoring failed:", error);
+            toast.error(error.shortMessage || error.message || 'Anchoring failed');
         }
     };
 
