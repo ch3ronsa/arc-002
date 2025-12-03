@@ -335,6 +335,33 @@ export function ProfileView() {
                         </motion.div>
                     </div>
 
+                    {/* Archived Tasks Section */}
+                    {archivedTasks.length > 0 && (
+                        <div className="lg:col-span-2 mt-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+                            >
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <Shield className="text-green-400" size={20} />
+                                    On-Chain Archives
+                                </h3>
+                                <div className="space-y-3">
+                                    {archivedTasks.map((log, index) => (
+                                        <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/5">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs text-neutral-500 font-mono">Block Log #{archivedTasks.length - index}</span>
+                                                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Anchored</span>
+                                            </div>
+                                            <p className="text-sm text-neutral-300 font-mono break-all">{log}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+
                     {/* Activity Timeline */}
                     <div className="lg:col-span-1">
                         <motion.div
