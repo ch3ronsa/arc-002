@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
     Layout, Lock, FileText, Settings, ChevronRight, ChevronDown, Plus,
     Grid, List, Calendar, Clock, CreditCard, Activity, Search, Bell,
-    Menu, Zap, Database, Shield
+    Menu, Zap, Database, Shield, Square
 } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
@@ -43,15 +43,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 {/* Sidebar Content */}
                 <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
-                    {/* Workspace - Single Only */}
+                    {/* Home */}
+                    <div className="space-y-1">
+                        <Link href="/">
+                            <SidebarItem
+                                icon={<Square size={18} />}
+                                label="Home"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/'}
+                            />
+                        </Link>
+                    </div>
+
+                    {/* Workspace */}
                     <div className="space-y-1">
                         {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Workspace</h3>}
-                        <Link href="/">
+                        <Link href="/myworkspace">
                             <SidebarItem
                                 icon={<Database size={18} />}
                                 label="My Workspace"
                                 isOpen={isSidebarOpen}
-                                active={pathname === '/'}
+                                active={pathname === '/myworkspace'}
                             />
                         </Link>
                     </div>
