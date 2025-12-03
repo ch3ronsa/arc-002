@@ -8,6 +8,7 @@ import { ConfettiManager } from "./ConfettiManager";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { FocusExitButton } from "./FocusExitButton";
 import { useProfile } from "@/hooks/useProfile";
+import { useTaskManager } from "@/hooks/useTaskManager";
 import Link from "next/link";
 // import useSound from "use-sound";
 import {
@@ -96,18 +97,10 @@ const defaultTasks: Task[] = [
 
 interface KanbanBoardProps {
     workspaceId?: string;
-    tasks?: Task[];
-    updateTask?: (id: TaskId, updates: Partial<Task>) => void;
-    deleteTask?: (id: TaskId) => void;
-    createTask?: (task: Task) => void;
-    addTag?: (id: TaskId, tag: string) => void;
-    moveTask?: (activeId: string, overId: string) => void;
-    setTasks?: (tasks: Task[]) => void;
 }
 
-export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks }: KanbanBoardProps) {
+export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
     const [columns] = useState(defaultCols);
-    // const [tasks, setTasks] = useState<Task[]>([]); // Lifted up
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -117,6 +110,10 @@ export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag,
     const { profile, addHistoryItem } = useProfile();
     const { isConnected, address } = useAccount();
     const { writeContractAsync } = useWriteContract();
+
+    // Use task manager hook
+    const { tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks } = useTaskManager(workspaceId);
+
 
     // Sound effects disabled due to missing assets
     const playClick = () => { };
