@@ -95,13 +95,14 @@ const defaultTasks: Task[] = [
 ];
 
 interface KanbanBoardProps {
-    tasks: Task[];
-    updateTask: (id: TaskId, updates: Partial<Task>) => void;
-    deleteTask: (id: TaskId) => void;
-    createTask: (task: Task) => void;
-    addTag: (id: TaskId, tag: string) => void;
-    moveTask: (activeId: string, overId: string) => void;
-    setTasks: (tasks: Task[]) => void;
+    workspaceId?: string;
+    tasks?: Task[];
+    updateTask?: (id: TaskId, updates: Partial<Task>) => void;
+    deleteTask?: (id: TaskId) => void;
+    createTask?: (task: Task) => void;
+    addTag?: (id: TaskId, tag: string) => void;
+    moveTask?: (activeId: string, overId: string) => void;
+    setTasks?: (tasks: Task[]) => void;
 }
 
 export function KanbanBoard({ tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks }: KanbanBoardProps) {
