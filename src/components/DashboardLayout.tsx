@@ -92,6 +92,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             />
                         </Link>
                     </div>
+
+                    {/* Documentation */}
+                    <div className="space-y-1">
+                        {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Resources</h3>}
+                        <Link href="/docs">
+                            <SidebarItem
+                                icon={<CreditCard size={18} />}
+                                label="Documentation"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/docs'}
+                            />
+                        </Link>
+                        <Link href="/changelog">
+                            <SidebarItem
+                                icon={<Grid size={18} />}
+                                label="Release Notes"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/changelog'}
+                            />
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Sidebar Footer */}
