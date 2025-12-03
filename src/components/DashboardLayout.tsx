@@ -71,6 +71,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* Pages */}
                     <div className="space-y-1">
                         {isSidebarOpen && <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Pages</h3>}
+                        <Link href="/profile">
+                            <SidebarItem
+                                icon={<Activity size={18} />}
+                                label="Profile"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/profile'}
+                            />
+                        </Link>
                         <Link href="/notes">
                             <SidebarItem
                                 icon={<FileText size={18} />}
@@ -93,14 +101,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 label="Focus Mode"
                                 isOpen={isSidebarOpen}
                                 active={pathname === '/focus'}
-                            />
-                        </Link>
-                        <Link href="/profile">
-                            <SidebarItem
-                                icon={<Activity size={18} />}
-                                label="Profile"
-                                isOpen={isSidebarOpen}
-                                active={pathname === '/profile'}
                             />
                         </Link>
                     </div>
