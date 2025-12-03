@@ -400,7 +400,7 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
                                 onClick={handleSync}
                                 className="flex items-center gap-2 bg-neon-accent/10 hover:bg-neon-accent/20 text-neon-primary hover:text-white px-4 py-2 rounded-lg font-medium transition-all border border-neon-accent/20 hover:border-neon-accent/40"
                             >
-                                <span>Archive Completed</span>
+                                <span>Anchor to On-Chain</span>
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                             </button>
                         )}
