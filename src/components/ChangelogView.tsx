@@ -27,7 +27,7 @@ interface Release {
 const releases: Release[] = [
     {
         version: 'v0.4.0',
-        date: 'December 3, 2024',
+        date: 'December 3, 2025',
         versionType: 'minor',
         highlights: ['User Profile System', 'On-Chain Stats', 'Achievement System'],
         changes: [
@@ -41,7 +41,7 @@ const releases: Release[] = [
     },
     {
         version: 'v0.3.2',
-        date: 'December 2, 2024',
+        date: 'December 2, 2025',
         versionType: 'patch',
         changes: [
             { type: 'bugfix', description: 'Fixed DashboardLayout import issues across all pages' },
@@ -52,7 +52,7 @@ const releases: Release[] = [
     },
     {
         version: 'v0.3.0',
-        date: 'December 1, 2024',
+        date: 'December 1, 2025',
         versionType: 'minor',
         highlights: ['Encrypted Notes', 'Password Security', 'Document Anchoring'],
         changes: [
@@ -68,18 +68,18 @@ const releases: Release[] = [
     },
     {
         version: 'v0.2.5',
-        date: 'November 28, 2024',
+        date: 'November 28, 2025',
         versionType: 'patch',
         changes: [
             { type: 'bugfix', description: 'Fixed Save button not showing success notification' },
             { type: 'bugfix', description: 'Corrected ABI format for Wagmi compatibility' },
             { type: 'improvement', description: 'Enhanced error handling for blockchain transactions' },
-            { type: 'improvement', description: 'Added detailed logging for debugging' },
+            { type: 'improvement', description: 'Enhanced logging for debugging' },
         ]
     },
     {
         version: 'v0.2.0',
-        date: 'November 25, 2024',
+        date: 'November 25, 2025',
         versionType: 'minor',
         highlights: ['Kanban Board', 'Notes System', 'Focus Mode'],
         changes: [
@@ -93,7 +93,7 @@ const releases: Release[] = [
     },
     {
         version: 'v0.1.0',
-        date: 'November 20, 2024',
+        date: 'November 20, 2025',
         versionType: 'major',
         highlights: ['Initial Release', 'Arc Network Integration'],
         changes: [

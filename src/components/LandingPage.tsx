@@ -34,15 +34,11 @@ export function LandingPage() {
                                     Docs
                                 </button>
                             </Link>
-                            {isConnected ? (
-                                <Link href="/myworkspace">
-                                    <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium transition-all shadow-lg shadow-purple-500/20">
-                                        Go to Workspace
-                                    </button>
-                                </Link>
-                            ) : (
-                                <w3m-button />
-                            )}
+                            <Link href="/myworkspace">
+                                <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium transition-all shadow-lg shadow-purple-500/20">
+                                    Launch App
+                                </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -60,18 +56,12 @@ export function LandingPage() {
                             Your work, secured on-chain.
                         </p>
                         <div className="flex items-center justify-center gap-4 pt-4">
-                            {isConnected ? (
-                                <Link href="/myworkspace">
-                                    <button className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg transition-all shadow-lg shadow-purple-500/30">
-                                        Open Workspace
-                                        <ArrowRight size={20} />
-                                    </button>
-                                </Link>
-                            ) : (
-                                <div className="px-8 py-4">
-                                    <w3m-button />
-                                </div>
-                            )}
+                            <Link href="/myworkspace">
+                                <button className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg transition-all shadow-lg shadow-purple-500/30">
+                                    Open Workspace
+                                    <ArrowRight size={20} />
+                                </button>
+                            </Link>
                         </div>
                     </motion.div>
                 </div>
@@ -159,17 +149,11 @@ export function LandingPage() {
                         <p className="text-xl text-neutral-400 mb-8">
                             Join the future of decentralized productivity
                         </p>
-                        {isConnected ? (
-                            <Link href="/myworkspace">
-                                <button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg transition-all shadow-lg shadow-purple-500/30">
-                                    Go to Workspace
-                                </button>
-                            </Link>
-                        ) : (
-                            <div className="inline-block">
-                                <w3m-button />
-                            </div>
-                        )}
+                        <Link href="/myworkspace">
+                            <button className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg transition-all shadow-lg shadow-purple-500/30">
+                                Go to Workspace
+                            </button>
+                        </Link>
                     </div>
                 </motion.div>
             </div>
