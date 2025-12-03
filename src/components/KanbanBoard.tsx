@@ -316,12 +316,12 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
             .map((t) => t.content);
 
         if (doneTasks.length === 0) {
-            toast.error("No done tasks to archive!");
+            toast.error("No done tasks to anchor!");
             return;
         }
 
         // Confirmation dialog
-        const confirmed = window.confirm("Only tasks in the 'Done' column will be permanently archived to the blockchain. Continue?");
+        const confirmed = window.confirm("Only tasks in the 'Done' column will be permanently anchored to the blockchain. Continue?");
         if (!confirmed) return;
 
         try {
@@ -333,17 +333,17 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
             });
 
             toast.promise(promise, {
-                loading: 'Archiving to blockchain...',
+                loading: 'Anchoring to blockchain...',
                 success: (data) => {
                     // Save to local history
                     addHistoryItem(doneTasks);
                     playWhoosh();
-                    return `Archive Successful! Tx: ${data}`;
+                    return `Anchored ${doneTasks.length} tasks to blockchain!`;
                 },
-                error: (err) => `Archive Failed: ${err.message || 'Unknown error'}`,
+                error: (err) => `Anchor Failed: ${err.message || 'Unknown error'}`,
             });
         } catch (error) {
-            console.error("Archive failed:", error);
+            console.error("Anchor failed:", error);
         }
     }
 
