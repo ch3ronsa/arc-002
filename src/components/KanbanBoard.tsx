@@ -34,6 +34,9 @@ const TASK_JOURNAL_ABI = [
     {
         inputs: [{ internalType: "string[]", name: "taskTitles", type: "string[]" }],
         name: "logTasks",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function"
     }
 ];
 
