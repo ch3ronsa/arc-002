@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
     BookOpen, Wallet, Square, Lock, Trophy, Zap, Shield,
     CheckCircle2, AlertCircle, ChevronRight, Code, FileText,
-    Users, Calendar, Tag, Link as LinkIcon
+    Users, Calendar, Tag, Link as LinkIcon, ArrowLeft
 } from 'lucide-react';
 
 interface Section {
@@ -23,6 +24,7 @@ const sections: Section[] = [
 ];
 
 export function DocumentationView() {
+    const router = useRouter();
     const [activeSection, setActiveSection] = useState('quick-start');
 
     useEffect(() => {
@@ -60,6 +62,13 @@ export function DocumentationView() {
             {/* Sidebar - Table of Contents */}
             <aside className="w-64 border-r border-[var(--border-color)] bg-[var(--card-bg)] backdrop-blur-xl overflow-y-auto sticky top-0 h-screen hidden lg:block">
                 <div className="p-6 space-y-6">
+                    <button
+                        onClick={() => router.back()}
+                        className="flex items-center gap-2 text-sm text-neutral-400 hover:text-[var(--foreground)] transition-colors mb-2"
+                    >
+                        <ArrowLeft size={16} />
+                        Back
+                    </button>
                     <div>
                         <div className="flex items-center gap-2 mb-4">
                             <BookOpen className="text-purple-400" size={20} />
@@ -89,6 +98,17 @@ export function DocumentationView() {
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto">
                 <div className="max-w-4xl mx-auto p-6 lg:p-12 space-y-16">
+                    {/* Mobile Back Button */}
+                    <div className="lg:hidden mb-8">
+                        <button
+                            onClick={() => router.back()}
+                            className="flex items-center gap-2 text-sm text-neutral-400 hover:text-[var(--foreground)] transition-colors"
+                        >
+                            <ArrowLeft size={16} />
+                            Back
+                        </button>
+                    </div>
+
                     {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
