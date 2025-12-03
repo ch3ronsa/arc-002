@@ -363,6 +363,9 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
                 <div className="w-full px-8 py-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center gap-4">
                         <h1 className="text-3xl font-bold text-white tracking-tight">Task Board</h1>
+                        <span className="hidden md:inline-flex px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium">
+                            This project is on Arc Network Testnet
+                        </span>
                     </div>
 
                     <div className="flex items-center gap-4">
