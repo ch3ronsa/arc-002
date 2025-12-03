@@ -83,6 +83,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 active={pathname === '/focus'}
                             />
                         </Link>
+                        <Link href="/profile">
+                            <SidebarItem
+                                icon={<Activity size={18} />}
+                                label="Profile"
+                                isOpen={isSidebarOpen}
+                                active={pathname === '/profile'}
+                            />
+                        </Link>
                     </div>
                 </div>
 
