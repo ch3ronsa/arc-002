@@ -33,10 +33,11 @@ export function ProfileView() {
     const { address, isConnected } = useAccount();
     const [mounted, setMounted] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [xp, setXp] = useState(1250);
-    const [level, setLevel] = useState(5);
-    const [completedTasks, setCompletedTasks] = useState(47);
-    const [bounties, setBounties] = useState(125.5);
+
+    // Real data - can be connected to actual sources
+    const xp = 0; // Can be calculated from actual achievements
+    const level = 1;
+    const completedTasks = 0; // Can be fetched from Supabase
 
     useEffect(() => {
         setMounted(true);
@@ -192,31 +193,22 @@ export function ProfileView() {
                 </motion.div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Tasks Completed */}
                     <StatCard
                         icon={<CheckCircle2 className="text-green-400" size={24} />}
                         label="Tasks Completed"
                         value={completedTasks}
-                        trend="+12 this week"
+                        trend="Track your productivity"
                         color="green"
-                    />
-
-                    {/* Bounties Earned */}
-                    <StatCard
-                        icon={<Trophy className="text-yellow-400" size={24} />}
-                        label="Bounties Earned"
-                        value={`${bounties} ARC`}
-                        trend="+25 ARC this month"
-                        color="yellow"
                     />
 
                     {/* On-Chain Actions */}
                     <StatCard
                         icon={<Shield className="text-blue-400" size={24} />}
                         label="On-Chain Actions"
-                        value={23}
-                        trend="15 anchors, 8 tasks"
+                        value={0}
+                        trend="Blockchain interactions"
                         color="blue"
                     />
                 </div>
@@ -243,8 +235,8 @@ export function ProfileView() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: 0.3 + index * 0.05 }}
                                         className={`relative p-4 rounded-xl border transition-all ${achievement.unlocked
-                                                ? 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 hover:border-purple-500/50'
-                                                : 'bg-black/20 border-neutral-800 opacity-60'
+                                            ? 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 hover:border-purple-500/50'
+                                            : 'bg-black/20 border-neutral-800 opacity-60'
                                             }`}
                                     >
                                         <div className="flex flex-col items-center text-center gap-2">
@@ -306,8 +298,8 @@ export function ProfileView() {
                                         className="flex items-start gap-3 pb-4 border-b border-neutral-800 last:border-0 last:pb-0"
                                     >
                                         <div className={`w-2 h-2 rounded-full mt-2 ${activity.type === 'task' ? 'bg-green-400' :
-                                                activity.type === 'note' ? 'bg-blue-400' :
-                                                    'bg-yellow-400'
+                                            activity.type === 'note' ? 'bg-blue-400' :
+                                                'bg-yellow-400'
                                             }`} />
                                         <div className="flex-1">
                                             <div className="text-sm text-[var(--foreground)] font-medium">
