@@ -165,23 +165,14 @@ export function ChangelogView() {
                                 key={type}
                                 onClick={() => setFilter(type)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === type
-                                        ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-                                        : 'bg-black/20 text-neutral-400 hover:bg-black/30'
+                                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
+                                    : 'bg-black/20 text-neutral-400 hover:bg-black/30'
                                     }`}
                             >
                                 {type.charAt(0).toUpperCase() + type.slice(1)}
                             </button>
                         ))}
                     </div>
-
-                    {/* Subscribe Button */}
-                    <button
-                        onClick={handleSubscribe}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium transition-all shadow-lg shadow-purple-500/20"
-                    >
-                        <Bell size={16} />
-                        Subscribe to Updates
-                    </button>
                 </motion.div>
 
                 {/* Developer Logs Toggle */}
@@ -258,8 +249,8 @@ export function ChangelogView() {
                                                     {release.version}
                                                 </h2>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${release.versionType === 'major' ? 'bg-red-500/20 text-red-400' :
-                                                        release.versionType === 'minor' ? 'bg-blue-500/20 text-blue-400' :
-                                                            'bg-green-500/20 text-green-400'
+                                                    release.versionType === 'minor' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-green-500/20 text-green-400'
                                                     }`}>
                                                     {release.versionType.toUpperCase()}
                                                 </span>

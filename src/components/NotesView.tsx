@@ -42,6 +42,19 @@ export function NotesView({ workspaceId = '1' }: { workspaceId?: string }) {
         setMounted(true);
     }, []);
 
+    // Auto-save effect with debounce
+    useEffect(() => {
+        if (!selectedNote || !mounted || !address) return;
+
+        const saveTimer = setTimeout(async () => {
+            if (selectedNote.content) {
+                await handleSaveNote(selectedNote);
+            }
+        }, 2000); // Auto-save after 2 seconds of inactivity
+
+        return () => clearTimeout(saveTimer);
+    }, [selectedNote?.content, selectedNote?.title, address, mounted]);
+
     // Load notes from Supabase
     useEffect(() => {
         if (!address) {
@@ -142,7 +155,9 @@ export function NotesView({ workspaceId = '1' }: { workspaceId?: string }) {
             console.error('Error saving note:', error);
             toast.error('Failed to save note');
         } else {
-            toast.success('Note saved');
+            // Update local notes array
+            setNotes(prev => prev.map(n => n.id === note.id ? { ...note, updatedAt: new Date().toISOString() } : n));
+            toast.success('Note saved successfully!');
         }
     };
 
