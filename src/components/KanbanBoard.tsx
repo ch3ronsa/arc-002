@@ -107,6 +107,19 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [focusMode, setFocusMode] = useState(false);
+
+    const { profile, addHistoryItem } = useProfile();
+    const { isConnected, address } = useAccount();
+    const { writeContractAsync } = useWriteContract();
+    const publicClient = usePublicClient();
+
+    // Use task manager hook
+    const { tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks } = useTaskManager(workspaceId);
+
+    // Sound effects disabled due to missing assets
+    const playClick = () => { };
     const playPop = () => { };
     const playWhoosh = () => { };
 
