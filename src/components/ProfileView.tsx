@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract, usePublicClient } from 'wagmi';
+import { useAccount, usePublicClient } from 'wagmi';
 import { motion } from 'framer-motion';
 import {
     Trophy, Star, Zap, Clock, CheckCircle2, Lock,
@@ -31,8 +31,10 @@ interface Activity {
 
 export function ProfileView() {
     const { address, isConnected } = useAccount();
+    const publicClient = usePublicClient();
     const [mounted, setMounted] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [archivedTasks, setArchivedTasks] = useState<string[]>([]);
 
     // Real data - can be connected to actual sources
     const xp = 0; // Can be calculated from actual achievements
@@ -102,76 +104,75 @@ export function ProfileView() {
         { id: '5', type: 'note', title: 'Anchored document to chain', timestamp: '3 days ago', onChain: true },
     ];
 
-    const [archivedTasks, setArchivedTasks] = useState<string[]>([]);
-
-    // Read archived tasks from blockchain
-    const { data: taskLogs } = useReadContract({
-        address: ARC_JOURNAL_ADDRESS as `0x${string}`,
-        abi: [
-            {
-                name: 'taskLogs',
-                type: 'function',
-                stateMutability: 'view',
-                inputs: [
-                    { name: 'user', type: 'address' },
-                    { name: 'index', type: 'uint256' }
-                ],
-                outputs: [{ name: '', type: 'string' }]
-            },
-            {
-                name: 'getTaskLogCount',
-                type: 'function',
-                stateMutability: 'view',
-                inputs: [{ name: 'user', type: 'address' }],
-                outputs: [{ name: '', type: 'uint256' }]
-            }
-        ] as const,
-        functionName: 'getTaskLogCount',
-        args: address ? [address] : undefined,
-        query: {
-            enabled: !!address
-        }
-    });
-
     const handleSyncData = async () => {
+        if (!address || !publicClient) return;
+
         setIsSyncing(true);
 
-        // Fetch archived tasks if available
-        if (address && taskLogs) {
-            try {
-                const count = Number(taskLogs);
-                const tasks: string[] = [];
+        try {
+            toast.loading('Syncing on-chain data...', { id: 'sync-data' });
 
-                // Note: This is a simplified version. In production, you'd batch read these
-                toast.promise(
-                    (async () => {
-                        for (let i = 0; i < Math.min(count, 10); i++) {
-                            // Would need to read individual task logs here
-                        }
-                        return count;
-                    })(),
+            // 1. Get total count of logs
+            const count = await publicClient.readContract({
+                address: ARC_JOURNAL_ADDRESS as `0x${string}`,
+                abi: [
                     {
-                        loading: 'Syncing on-chain data...',
-                        success: (count) => `Found ${count} archived tasks`,
-                        error: 'Failed to sync data'
+                        name: 'getTaskLogCount',
+                        type: 'function',
+                        stateMutability: 'view',
+                        inputs: [{ name: 'user', type: 'address' }],
+                        outputs: [{ name: '', type: 'uint256' }]
                     }
-                );
-            } catch (error) {
-                console.error('Sync error:', error);
-                toast.error('Failed to sync data');
-            }
-        } else {
-            toast.promise(
-                new Promise(resolve => setTimeout(resolve, 2000)),
-                {
-                    loading: 'Syncing on-chain data...',
-                    success: 'Data synced successfully!',
-                    error: 'Failed to sync data'
-                }
-            );
-        }
+                ],
+                functionName: 'getTaskLogCount',
+                args: [address]
+            });
 
-        setTimeout(() => setIsSyncing(false), 2000);
+            const logCount = Number(count);
+            console.log('Found logs:', logCount);
+
+            if (logCount === 0) {
+                toast.success('No archived tasks found', { id: 'sync-data' });
+                setIsSyncing(false);
+                return;
+            }
+
+            // 2. Fetch logs in reverse order (newest first)
+            const tasks: string[] = [];
+            const limit = Math.min(logCount, 10); // Fetch last 10 logs
+
+            for (let i = logCount - 1; i >= logCount - limit; i--) {
+                const log = await publicClient.readContract({
+                    address: ARC_JOURNAL_ADDRESS as `0x${string}`,
+                    abi: [
+                        {
+                            name: 'taskLogs',
+                            type: 'function',
+                            stateMutability: 'view',
+                            inputs: [
+                                { name: 'user', type: 'address' },
+                                { name: 'index', type: 'uint256' }
+                            ],
+                            outputs: [{ name: '', type: 'string' }]
+                        }
+                    ],
+                    functionName: 'taskLogs',
+                    args: [address, BigInt(i)]
+                });
+
+                // The log is a string (comma separated task titles)
+                tasks.push(log as string);
+            }
+
+            setArchivedTasks(tasks);
+            toast.success(`Synced ${tasks.length} archived logs!`, { id: 'sync-data' });
+
+        } catch (error) {
+            console.error('Sync error:', error);
+            toast.error('Failed to sync data', { id: 'sync-data' });
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     const maxXp = (level + 1) * 500;
@@ -333,34 +334,34 @@ export function ProfileView() {
                                 ))}
                             </div>
                         </motion.div>
-                    </div>
 
-                    {/* Archived Tasks Section */}
-                    {archivedTasks.length > 0 && (
-                        <div className="lg:col-span-2 mt-6">
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-                            >
-                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                    <Shield className="text-green-400" size={20} />
-                                    On-Chain Archives
-                                </h3>
-                                <div className="space-y-3">
-                                    {archivedTasks.map((log, index) => (
-                                        <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/5">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-xs text-neutral-500 font-mono">Block Log #{archivedTasks.length - index}</span>
-                                                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Anchored</span>
+                        {/* Archived Tasks Section */}
+                        {archivedTasks.length > 0 && (
+                            <div className="mt-6">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+                                >
+                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                        <Shield className="text-green-400" size={20} />
+                                        On-Chain Archives
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {archivedTasks.map((log, index) => (
+                                            <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/5">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-xs text-neutral-500 font-mono">Block Log #{archivedTasks.length - index}</span>
+                                                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Anchored</span>
+                                                </div>
+                                                <p className="text-sm text-neutral-300 font-mono break-all">{log}</p>
                                             </div>
-                                            <p className="text-sm text-neutral-300 font-mono break-all">{log}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Activity Timeline */}
                     <div className="lg:col-span-1">
@@ -413,6 +414,7 @@ export function ProfileView() {
 
 function StatCard({ icon, label, value, trend, color }: {
     icon: React.ReactNode;
+    title?: string;
     label: string;
     value: string | number;
     trend: string;
