@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, usePublicClient } from 'wagmi';
 import { motion } from 'framer-motion';
 import {
     Trophy, Star, Zap, Clock, CheckCircle2, Lock,
