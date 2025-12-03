@@ -74,8 +74,8 @@ export function DocumentationView() {
                                 key={section.id}
                                 onClick={() => scrollToSection(section.id)}
                                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${activeSection === section.id
-                                        ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                                        : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-300'
+                                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                    : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-300'
                                     }`}
                             >
                                 {section.icon}
@@ -353,21 +353,6 @@ export function DocumentationView() {
                             />
                         </div>
                     </Section>
-
-                    {/* Footer */}
-                    <div className="pt-12 border-t border-neutral-800 text-center space-y-4">
-                        <p className="text-neutral-500 text-sm">
-                            Still have questions? Join our community or check the GitHub repo.
-                        </p>
-                        <div className="flex items-center justify-center gap-4">
-                            <button className="px-4 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-sm transition-all">
-                                Join Discord
-                            </button>
-                            <button className="px-4 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm transition-all">
-                                View on GitHub
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </main>
         </div>
