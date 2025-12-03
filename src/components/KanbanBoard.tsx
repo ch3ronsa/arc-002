@@ -26,7 +26,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import { TaskCard } from "./TaskCard";
 
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract, usePublicClient } from "wagmi";
 import { toast } from "sonner";
 
 const CONTRACT_ADDRESS = "0xeB282dF68897C6245526e9BFD88e82eF5BcbD5c2";
@@ -107,19 +107,6 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [showConfetti, setShowConfetti] = useState(false);
-    const [focusMode, setFocusMode] = useState(false);
-
-    const { profile, addHistoryItem } = useProfile();
-    const { isConnected, address } = useAccount();
-    const { writeContractAsync } = useWriteContract();
-
-    // Use task manager hook
-    const { tasks, updateTask, deleteTask, createTask, addTag, moveTask, setTasks } = useTaskManager(workspaceId);
-
-
-    // Sound effects disabled due to missing assets
-    const playClick = () => { };
     const playPop = () => { };
     const playWhoosh = () => { };
 
@@ -328,15 +315,17 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
         if (!confirmed) return;
 
         try {
-            const promise = writeContractAsync({
+            const hash = await writeContractAsync({
                 address: CONTRACT_ADDRESS,
                 abi: TASK_JOURNAL_ABI,
                 functionName: "logTasks",
                 args: [doneTasks],
             });
 
+            const promise = publicClient ? publicClient.waitForTransactionReceipt({ hash }) : Promise.resolve();
+
             toast.promise(promise, {
-                loading: 'Anchoring to blockchain...',
+                loading: 'Anchoring to blockchain... (Waiting for confirmation)',
                 success: (data) => {
                     // Save to local history
                     addHistoryItem(doneTasks);
@@ -347,6 +336,7 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
             });
         } catch (error) {
             console.error("Anchor failed:", error);
+            toast.error("Transaction failed to start");
         }
     }
 
