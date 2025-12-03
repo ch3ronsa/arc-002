@@ -36,8 +36,8 @@ const arcNetwork = {
 } as const satisfies Chain;
 
 const config = getDefaultConfig({
-    appName: 'Notion Kanban Web3',
-    projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'test-project-id',
+    appName: 'ArcOS',
+    projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c0a3c5b8e6d4e8f3a2b5c8d3a1b4c7e9',
     chains: [arcNetwork],
     ssr: true,
 });
