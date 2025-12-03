@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import KanbanBoard from "@/components/KanbanBoard";
+import { KanbanBoard } from "@/components/KanbanBoard";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useWorkspace } from '@/providers/WorkspaceProvider';
 
