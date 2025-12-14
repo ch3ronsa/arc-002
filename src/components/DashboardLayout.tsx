@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Layout, Lock, FileText, Settings, ChevronRight, ChevronDown, Plus,
     Grid, List, Calendar, Clock, CreditCard, Activity, Search, Bell,
-    Menu, Zap, Database, Shield, Square
+    Menu, Zap, Database, Shield, Square, X
 } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
@@ -15,17 +15,107 @@ import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { profile } = useProfile();
     const { isConnected } = useAccount();
     const pathname = usePathname();
 
+    const closeMobileMenu = () => setMobileMenuOpen(false);
+
+    const NavItems = () => (
+        <>
+            {/* Home */}
+            <div className="space-y-1">
+                <Link href="/" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<Square size={18} />}
+                        label="Home"
+                        isOpen={true}
+                        active={pathname === '/'}
+                    />
+                </Link>
+            </div>
+
+            {/* Workspace */}
+            <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Workspace</h3>
+                <Link href="/myworkspace" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<Database size={18} />}
+                        label="My Workspace"
+                        isOpen={true}
+                        active={pathname === '/myworkspace'}
+                    />
+                </Link>
+            </div>
+
+            {/* Pages */}
+            <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Pages</h3>
+                <Link href="/profile" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<Activity size={18} />}
+                        label="Profile"
+                        isOpen={true}
+                        active={pathname === '/profile'}
+                    />
+                </Link>
+                <Link href="/notes" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<FileText size={18} />}
+                        label="Notes"
+                        isOpen={true}
+                        active={pathname === '/notes'}
+                    />
+                </Link>
+                <Link href="/encrypted-notes" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<Lock size={18} />}
+                        label="Encrypted Notes"
+                        isOpen={true}
+                        active={pathname?.startsWith('/encrypted-notes')}
+                    />
+                </Link>
+                <Link href="/focus" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<Clock size={18} />}
+                        label="Focus Mode"
+                        isOpen={true}
+                        active={pathname === '/focus'}
+                    />
+                </Link>
+            </div>
+
+            {/* Documentation */}
+            <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-neutral-500 px-3 mb-2 uppercase tracking-wider">Resources</h3>
+                <Link href="/docs" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<CreditCard size={18} />}
+                        label="Documentation"
+                        isOpen={true}
+                        active={pathname === '/docs'}
+                    />
+                </Link>
+                <Link href="/changelog" onClick={closeMobileMenu}>
+                    <SidebarItem
+                        icon={<Grid size={18} />}
+                        label="Release Notes"
+                        isOpen={true}
+                        active={pathname === '/changelog'}
+                    />
+                </Link>
+            </div>
+        </>
+    );
+
     return (
         <div className="flex h-screen bg-[var(--background)] text-[var(--foreground)] overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-500">
-            {/* Sidebar */}
+            {/* Desktop Sidebar */}
             <motion.aside
                 initial={{ width: 260 }}
                 animate={{ width: isSidebarOpen ? 260 : 72 }}
-                className="h-full bg-[var(--card-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 relative z-20 backdrop-blur-xl"
+                className="hidden md:flex h-full bg-[var(--card-bg)] border-r border-[var(--border-color)] flex-col transition-all duration-300 relative z-20 backdrop-blur-xl"
             >
                 {/* Sidebar Header */}
                 <div className="h-16 flex items-center px-4 border-b border-[var(--border-color)]">
@@ -138,17 +228,75 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
             </motion.aside>
 
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={closeMobileMenu}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+                        />
+                        {/* Drawer */}
+                        <motion.div
+                            initial={{ x: -280 }}
+                            animate={{ x: 0 }}
+                            exit={{ x: -280 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="fixed top-0 left-0 h-full w-[280px] bg-[var(--card-bg)] border-r border-[var(--border-color)] z-50 md:hidden flex flex-col"
+                        >
+                            {/* Drawer Header */}
+                            <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--border-color)]">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                                        <Zap size={18} className="text-white" />
+                                    </div>
+                                    <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+                                        ArcOS
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={closeMobileMenu}
+                                    className="p-2 rounded-lg hover:bg-white/10 text-neutral-400"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            {/* Drawer Content */}
+                            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
+                                <NavItems />
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 bg-[url('/grid.svg')] bg-fixed">
                 {/* Header */}
-                <header className="h-16 border-b border-[var(--border-color)] bg-[var(--card-bg)] backdrop-blur-md flex items-center justify-between px-6 z-10 transition-colors duration-500">
-                    {/* Left: View Switcher - Only show on Board view for now or keep generic */}
-                    <div className="flex items-center gap-6">
-                        {/* We can keep tabs if we want sub-navigation, but for now just hiding or keeping static */}
+                <header className="h-16 border-b border-[var(--border-color)] bg-[var(--card-bg)] backdrop-blur-md flex items-center justify-between px-4 md:px-6 z-10 transition-colors duration-500">
+                    {/* Left: Mobile Menu Button */}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setMobileMenuOpen(true)}
+                            className="p-2 rounded-lg hover:bg-white/10 text-neutral-400 md:hidden"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        {/* Logo for mobile */}
+                        <div className="flex items-center gap-2 md:hidden">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                                <Zap size={14} className="text-white" />
+                            </div>
+                            <span className="font-bold text-sm">ArcOS</span>
+                        </div>
                     </div>
 
                     {/* Right: Actions */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4">
                         <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
                     </div>
                 </header>

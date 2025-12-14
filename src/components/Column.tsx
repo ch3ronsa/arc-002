@@ -47,7 +47,7 @@ export function Column({ column, tasks, deleteTask, updateTask, createTask, addT
         <div
             ref={setNodeRef}
             style={style}
-            className="glass-panel w-[350px] h-full rounded-2xl flex flex-col p-4 transition-colors hover:bg-white/5"
+            className="glass-panel w-full md:w-[300px] lg:w-[350px] md:min-w-[280px] md:flex-shrink-0 md:h-full rounded-2xl flex flex-col p-4 transition-colors hover:bg-white/5"
         >
             <div className="flex gap-2 items-center justify-between mb-4 px-2">
                 <div className="flex gap-2 items-center font-bold text-neutral-200">

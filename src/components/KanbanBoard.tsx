@@ -360,26 +360,26 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
             {/* Top Bar / Dashboard Header */}
             {/* Board Toolbar */}
             {!focusMode && (
-                <div className="w-full px-8 py-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-white tracking-tight">Task Board</h1>
-                        <span className="hidden md:inline-flex px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium">
-                            This project is on Arc Network Testnet
+                <div className="w-full px-4 md:px-8 py-4 md:py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <h1 className="text-xl md:text-3xl font-bold text-white tracking-tight">Task Board</h1>
+                        <span className="hidden lg:inline-flex px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium">
+                            Arc Network Testnet
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4">
                         {/* Search Bar */}
-                        <div className="relative group">
+                        <div className="relative group flex-1 md:flex-none">
                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <Search className="text-neutral-500 group-focus-within:text-blue-400 transition-colors" size={16} />
                             </div>
                             <input
                                 type="text"
-                                placeholder="Filter tasks..."
+                                placeholder="Filter..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="bg-white/5 border border-white/10 text-sm rounded-lg pl-9 pr-4 py-2 w-48 focus:w-64 transition-all duration-300 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 placeholder:text-neutral-600"
+                                className="bg-white/5 border border-white/10 text-sm rounded-lg pl-9 pr-4 py-2 w-full md:w-32 lg:w-48 focus:md:w-64 transition-all duration-300 focus:outline-none focus:border-blue-500/50 focus:bg-black/40 placeholder:text-neutral-600"
                             />
                         </div>
 
@@ -398,18 +398,18 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
                                     toast.success("Task added to To Do!");
                                 }
                             }}
-                            className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 px-4 py-2 rounded-lg font-medium transition-all border border-blue-500/20 hover:border-blue-500/40"
+                            className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 px-3 md:px-4 py-2 rounded-lg font-medium transition-all border border-blue-500/20 hover:border-blue-500/40"
                         >
                             <Plus size={16} />
-                            <span>New Task</span>
+                            <span className="hidden sm:inline">New Task</span>
                         </button>
 
                         {isConnected && (
                             <button
                                 onClick={handleSync}
-                                className="flex items-center gap-2 bg-neon-accent/10 hover:bg-neon-accent/20 text-neon-primary hover:text-white px-4 py-2 rounded-lg font-medium transition-all border border-neon-accent/20 hover:border-neon-accent/40"
+                                className="flex items-center gap-2 bg-neon-accent/10 hover:bg-neon-accent/20 text-neon-primary hover:text-white px-3 md:px-4 py-2 rounded-lg font-medium transition-all border border-neon-accent/20 hover:border-neon-accent/40"
                             >
-                                <span>Anchor to On-Chain</span>
+                                <span className="hidden sm:inline">Anchor</span>
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                             </button>
                         )}
@@ -421,7 +421,7 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
                             <button onClick={handleImport} className="p-2 text-neutral-400 hover:text-white hover:bg-white/5 rounded-md transition-colors" title="Import Data">
                                 <Upload size={16} />
                             </button>
-                            <button onClick={() => setFocusMode(!focusMode)} className="p-2 text-neutral-400 hover:text-white hover:bg-white/5 rounded-md transition-colors" title="Focus Mode (F)">
+                            <button onClick={() => setFocusMode(!focusMode)} className="hidden md:block p-2 text-neutral-400 hover:text-white hover:bg-white/5 rounded-md transition-colors" title="Focus Mode (F)">
                                 {focusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                             </button>
                             <ThemeSwitcher />
@@ -433,18 +433,18 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
             <ConfettiManager isActive={showConfetti} onComplete={() => setShowConfetti(false)} />
             <FocusExitButton show={focusMode} onExit={() => setFocusMode(false)} />
 
-            <main className="flex-1 p-8 overflow-x-auto overflow-y-hidden">
+            <main className="flex-1 p-4 md:p-8 overflow-auto">
                 {/* Progress Section */}
                 {!focusMode && (
-                    <div className="mb-8 max-w-7xl mx-auto transition-all duration-500">
-                        <div className="flex justify-between items-end mb-2">
+                    <div className="mb-4 md:mb-8 max-w-7xl mx-auto transition-all duration-500">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 mb-2">
                             <div>
-                                <h2 className="text-3xl font-bold text-white mb-1">Task Board</h2>
-                                <p className="text-neutral-500 text-sm">Manage your tasks on the Arc Network</p>
+                                <h2 className="text-xl md:text-3xl font-bold text-white mb-1">Task Board</h2>
+                                <p className="text-neutral-500 text-xs md:text-sm">Manage your tasks on the Arc Network</p>
                             </div>
-                            <div className="text-right">
-                                <span className="text-2xl font-bold text-neon-primary">{Math.round(progress)}%</span>
-                                <span className="text-neutral-500 text-sm ml-2">Complete</span>
+                            <div className="text-left sm:text-right">
+                                <span className="text-xl md:text-2xl font-bold text-neon-primary">{Math.round(progress)}%</span>
+                                <span className="text-neutral-500 text-xs md:text-sm ml-2">Complete</span>
                             </div>
                         </div>
                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden backdrop-blur-sm">
@@ -463,7 +463,7 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
                     onDragEnd={onDragEnd}
                     onDragOver={onDragOver}
                 >
-                    <div className="flex gap-6 h-[calc(100vh-220px)] max-w-7xl mx-auto pb-4">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-220px)] max-w-7xl mx-auto pb-4 md:overflow-x-auto">
                         {columns.map((col) => (
                             <Column
                                 key={col.id}
