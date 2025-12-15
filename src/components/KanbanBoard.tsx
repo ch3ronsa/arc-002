@@ -463,17 +463,18 @@ export function KanbanBoard({ workspaceId = '1' }: KanbanBoardProps) {
                     onDragEnd={onDragEnd}
                     onDragOver={onDragOver}
                 >
-                    <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-220px)] max-w-7xl mx-auto pb-4 md:overflow-x-auto">
+                    <div className="flex flex-row gap-4 md:gap-6 h-[calc(100vh-280px)] md:h-[calc(100vh-220px)] max-w-7xl mx-auto pb-4 overflow-x-auto snap-x snap-mandatory md:snap-none scroll-smooth">
                         {columns.map((col) => (
-                            <Column
-                                key={col.id}
-                                column={col}
-                                tasks={filteredTasks.filter((task) => task.columnId === col.id)}
-                                deleteTask={deleteTask}
-                                updateTask={updateTask}
-                                createTask={col.id === "todo" ? handleCreateTask : undefined}
-                                addTag={addTag}
-                            />
+                            <div key={col.id} className="snap-center shrink-0 w-[85vw] md:w-auto">
+                                <Column
+                                    column={col}
+                                    tasks={filteredTasks.filter((task) => task.columnId === col.id)}
+                                    deleteTask={deleteTask}
+                                    updateTask={updateTask}
+                                    createTask={col.id === "todo" ? handleCreateTask : undefined}
+                                    addTag={addTag}
+                                />
+                            </div>
                         ))}
                     </div>
 

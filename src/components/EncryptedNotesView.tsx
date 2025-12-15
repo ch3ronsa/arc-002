@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lock, Plus, Search, Tag, Calendar, Shield, Upload, Trash2, Eye, EyeOff, FileText, MoreVertical, Anchor, Save } from 'lucide-react';
+import { Lock, Plus, Search, Tag, Calendar, Shield, Upload, Trash2, Eye, EyeOff, FileText, MoreVertical, Anchor, Save, ArrowLeft } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
@@ -62,6 +62,9 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
     const [searchQuery, setSearchQuery] = useState('');
     const [mounted, setMounted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Mobile state: show editor when a note is selected on mobile
+    const [showMobileEditor, setShowMobileEditor] = useState(false);
 
     // Encryption State
     const [isLocked, setIsLocked] = useState(true);
@@ -151,6 +154,15 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
         toast.success("Notes unlocked");
     };
 
+    const handleSelectNote = (note: Note) => {
+        setSelectedNote(note);
+        setShowMobileEditor(true); // Show editor on mobile when note is selected
+    };
+
+    const handleBackToList = () => {
+        setShowMobileEditor(false);
+    };
+
     const handleCreateNote = async () => {
         if (!address) {
             toast.error('Please connect your wallet');
@@ -174,6 +186,7 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
 
         setNotes([newNote, ...notes]);
         setSelectedNote(newNote);
+        setShowMobileEditor(true); // Show editor on mobile for new note
 
         // Save immediately (encrypted)
         await saveNoteToSupabase(newNote);
@@ -230,6 +243,7 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
             setNotes(newNotes);
             if (selectedNote?.id === id) {
                 setSelectedNote(newNotes.length > 0 ? newNotes[0] : null);
+                setShowMobileEditor(false);
             }
 
             const { error } = await supabase
@@ -347,11 +361,15 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
             {/* Show LockScreen if password exists but notes are locked */}
             {hasPassword && isLocked && <LockScreen onUnlock={handleUnlock} />}
 
-            {/* Sidebar */}
-            <div className={clsx("w-64 border-r border-[var(--border-color)] flex flex-col bg-[var(--card-bg)] backdrop-blur-xl transition-all", isLocked && "blur-sm pointer-events-none")}>
-                <div className="p-4 border-b border-[var(--border-color)]">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">Pages</h2>
+            {/* Sidebar - Hidden on mobile when editor is shown */}
+            <div className={clsx(
+                "w-full md:w-64 border-r border-[var(--border-color)] flex flex-col bg-[var(--card-bg)] backdrop-blur-xl transition-all",
+                isLocked && "blur-sm pointer-events-none",
+                showMobileEditor ? "hidden md:flex" : "flex"
+            )}>
+                <div className="p-3 md:p-4 border-b border-[var(--border-color)]">
+                    <div className="flex items-center justify-between mb-3 md:mb-4">
+                        <h2 className="text-xs md:text-sm font-semibold text-neutral-500 uppercase tracking-wider">Pages</h2>
                         <button
                             onClick={handleCreateNote}
                             className="p-1.5 rounded-md hover:bg-white/10 text-neutral-400 hover:text-[var(--foreground)] transition-colors"
@@ -377,9 +395,9 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                     {filteredNotes.map(note => (
                         <button
                             key={note.id}
-                            onClick={() => setSelectedNote(note)}
+                            onClick={() => handleSelectNote(note)}
                             className={twMerge(
-                                "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group",
+                                "w-full flex items-center gap-2 px-3 py-2.5 md:py-2 rounded-md text-sm transition-colors group",
                                 selectedNote?.id === note.id ? "bg-purple-500/10 text-purple-400" : "text-neutral-400 hover:bg-white/5 hover:text-[var(--foreground)]"
                             )}
                         >
@@ -391,54 +409,72 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                 </div>
             </div>
 
-            {/* Main Editor Area */}
-            <div className={clsx("flex-1 flex flex-col h-full overflow-hidden relative transition-all", isLocked && "blur-md pointer-events-none")}>
+            {/* Main Editor Area - Full screen on mobile when editing */}
+            <div className={clsx(
+                "flex-1 flex flex-col h-full overflow-hidden relative transition-all",
+                isLocked && "blur-md pointer-events-none",
+                showMobileEditor ? "flex" : "hidden md:flex"
+            )}>
                 {selectedNote ? (
                     <>
                         {/* Header */}
-                        <div className="h-14 border-b border-[var(--border-color)] flex items-center justify-between px-6 bg-[var(--card-bg)] backdrop-blur-sm z-10">
-                            <div className="flex items-center gap-2 text-sm text-neutral-500">
-                                <span className="flex items-center gap-1 text-purple-400">
-                                    <Lock size={12} /> Encrypted
-                                </span>
-                                {selectedNote.onChain && (
-                                    <>
-                                        <span className="w-1 h-1 rounded-full bg-neutral-700" />
-                                        <span className="flex items-center gap-1 text-blue-400">
-                                            <Shield size={12} /> Anchored
-                                        </span>
-                                    </>
-                                )}
-                                <span className="w-1 h-1 rounded-full bg-neutral-700" />
-                                <span>Last edited {new Date(selectedNote.updatedAt).toLocaleTimeString()}</span>
-                            </div>
-
+                        <div className="h-12 md:h-14 border-b border-[var(--border-color)] flex items-center justify-between px-3 md:px-6 bg-[var(--card-bg)] backdrop-blur-sm z-10">
+                            {/* Mobile Back Button */}
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={handleSave}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+                                    onClick={handleBackToList}
+                                    className="p-2 rounded-md hover:bg-white/10 text-neutral-400 md:hidden"
                                 >
-                                    <Save size={14} /> Save
+                                    <ArrowLeft size={18} />
+                                </button>
+                                <div className="hidden md:flex items-center gap-2 text-sm text-neutral-500">
+                                    <span className="flex items-center gap-1 text-purple-400">
+                                        <Lock size={12} /> Encrypted
+                                    </span>
+                                    {selectedNote.onChain && (
+                                        <>
+                                            <span className="w-1 h-1 rounded-full bg-neutral-700" />
+                                            <span className="flex items-center gap-1 text-blue-400">
+                                                <Shield size={12} /> Anchored
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                                {/* Mobile: Show encrypted badge only */}
+                                <span className="flex md:hidden items-center gap-1 text-xs text-purple-400">
+                                    <Lock size={10} /> Encrypted
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-1 md:gap-2">
+                                <button
+                                    onClick={handleSave}
+                                    className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+                                >
+                                    <Save size={14} />
+                                    <span className="hidden sm:inline">Save</span>
                                 </button>
                                 <button
                                     onClick={handleAnchorDocument}
                                     disabled={isPending || isConfirming || selectedNote.onChain}
                                     className={twMerge(
-                                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
+                                        "flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
                                         selectedNote.onChain
                                             ? "bg-blue-500/10 text-blue-400 border-blue-500/20 cursor-default"
                                             : "bg-white/5 text-neutral-300 border-[var(--border-color)] hover:bg-white/10 hover:text-white"
                                     )}
                                 >
                                     {isPending || isConfirming ? (
-                                        <span className="animate-pulse">Anchoring...</span>
+                                        <span className="animate-pulse">...</span>
                                     ) : selectedNote.onChain ? (
                                         <>
-                                            <Shield size={14} /> Anchored
+                                            <Shield size={14} />
+                                            <span className="hidden sm:inline">Anchored</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Anchor size={14} /> Anchor to Chain
+                                            <Anchor size={14} />
+                                            <span className="hidden sm:inline">Anchor</span>
                                         </>
                                     )}
                                 </button>
@@ -453,7 +489,7 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
 
                         {/* Editor Content */}
                         <div className="flex-1 overflow-y-auto">
-                            <div className="max-w-4xl mx-auto px-12 py-12">
+                            <div className="max-w-4xl mx-auto px-4 md:px-12 py-6 md:py-12">
                                 {/* Title Input */}
                                 <input
                                     type="text"
@@ -464,7 +500,7 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                                         handleUpdateNote(updated);
                                     }}
                                     placeholder="Untitled Page"
-                                    className="w-full bg-transparent text-4xl font-bold text-[var(--foreground)] placeholder:text-neutral-700 border-none outline-none mb-8"
+                                    className="w-full bg-transparent text-2xl md:text-4xl font-bold text-[var(--foreground)] placeholder:text-neutral-700 border-none outline-none mb-6 md:mb-8"
                                 />
 
                                 {/* Tiptap Editor */}
@@ -482,9 +518,9 @@ export function EncryptedNotesView({ workspaceId = '1' }: { workspaceId?: string
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-neutral-500">
+                    <div className="flex-1 flex flex-col items-center justify-center text-neutral-500 p-4">
                         <FileText size={48} className="mb-4 opacity-20" />
-                        <p>Select a page to start writing</p>
+                        <p className="text-center">Select a page to start writing</p>
                     </div>
                 )}
             </div>
