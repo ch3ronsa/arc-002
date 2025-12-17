@@ -26,6 +26,21 @@ interface Release {
 
 const releases: Release[] = [
     {
+        version: 'v0.4.1',
+        date: 'December 15, 2025',
+        versionType: 'patch',
+        highlights: ['Mobile Responsiveness', 'Security Patch'],
+        changes: [
+            { type: 'feature', description: 'Enhanced mobile responsiveness with snap scrolling for Kanban columns' },
+            { type: 'feature', description: 'Added hamburger menu and mobile drawer navigation' },
+            { type: 'feature', description: 'Implemented notes list/editor toggle for mobile devices' },
+            { type: 'ui', description: 'Responsive toolbar with collapsible elements on smaller screens' },
+            { type: 'ui', description: 'Mobile-optimized Kanban board with vertical scrolling' },
+            { type: 'bugfix', description: 'Updated Next.js from 16.0.4 to 16.0.10 to patch critical CVE-2025-66478 (React2Shell) security vulnerability' },
+            { type: 'improvement', description: 'Updated eslint-config-next to 16.0.10 for compatibility' },
+        ]
+    },
+    {
         version: 'v0.4.0',
         date: 'December 3, 2025',
         versionType: 'minor',
@@ -203,16 +218,17 @@ export function ChangelogView() {
                         className="p-6 rounded-xl bg-black/40 border border-green-500/20 font-mono text-xs space-y-2"
                     >
                         <div className="text-green-400">$ git log --oneline --graph</div>
-                        <div className="text-neutral-500">* 4490eee (HEAD -&gt; main, origin/main) fix: restore DashboardLayout with proper structure</div>
+                        <div className="text-neutral-500">* b7dc3ac (HEAD -&gt; main, origin/main) fix: update Next.js to 16.0.10 to patch CVE-2025-66478 security vulnerability</div>
+                        <div className="text-neutral-500">* 4490eee fix: restore DashboardLayout with proper structure</div>
                         <div className="text-neutral-500">* fba952e feat: restructure encrypted notes with password setup flow</div>
                         <div className="text-neutral-500">* b760cd3 feat: separate encrypted and regular notes pages</div>
                         <div className="text-neutral-500">* d7f29c6 fix: save button notification and anchor to chain transaction</div>
                         <div className="text-neutral-500">* 6749f4d fix: convert ABI to JSON format for Wagmi compatibility</div>
                         <div className="text-green-400 mt-4">$ npm list --depth=0</div>
-                        <div className="text-neutral-500">├── next@16.0.4</div>
-                        <div className="text-neutral-500">├── wagmi@2.14.3</div>
-                        <div className="text-neutral-500">├── @rainbow-me/rainbowkit@2.2.2</div>
-                        <div className="text-neutral-500">└── framer-motion@11.16.0</div>
+                        <div className="text-neutral-500">├── next@16.0.10</div>
+                        <div className="text-neutral-500">├── wagmi@2.19.5</div>
+                        <div className="text-neutral-500">├── @rainbow-me/rainbowkit@2.2.9</div>
+                        <div className="text-neutral-500">└── framer-motion@12.23.24</div>
                     </motion.div>
                 )}
 
