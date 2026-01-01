@@ -26,6 +26,18 @@ interface Release {
 
 const releases: Release[] = [
     {
+        version: 'v0.4.2',
+        date: 'January 1, 2026',
+        versionType: 'patch',
+        highlights: ['E2E Testing', 'Playwright Integration'],
+        changes: [
+            { type: 'feature', description: 'Added Playwright for end-to-end testing with 15 comprehensive tests' },
+            { type: 'feature', description: 'Configured auto webServer startup for seamless test execution' },
+            { type: 'improvement', description: 'Test coverage for navigation, changelog, responsive design, and workspace' },
+            { type: 'improvement', description: 'Optimized test configuration for Chromium-only execution' },
+        ]
+    },
+    {
         version: 'v0.4.1',
         date: 'December 15, 2025',
         versionType: 'patch',
